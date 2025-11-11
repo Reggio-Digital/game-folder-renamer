@@ -44,52 +44,74 @@ It is **not** intended for:
    cd game-folder-renamer
    ```
 
-2. Install the required packages:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Get your IGDB API credentials:
+2. Get your IGDB API credentials:
    - Go to [Twitch Developer Console](https://dev.twitch.tv/console/apps)
    - Create a new application
    - Note down your Client ID and Client Secret
 
 ## Usage
 
-1. Start the Streamlit app:
+### Quick Start (Recommended)
+
+**Linux/Mac:**
+```bash
+./run.sh
+```
+
+**Windows:**
+```bash
+run.bat
+```
+
+The startup script will:
+- Check if Python is installed
+- Automatically install dependencies if needed
+- Start the Streamlit app
+- Open your browser to http://localhost:8501
+
+### Manual Start
+
+If you prefer to run manually:
+
+1. Install the required packages:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Start the Streamlit app:
    ```bash
    streamlit run app.py
    ```
 
-2. Open your web browser - Streamlit will automatically open at:
-   ```
-   http://localhost:8501
-   ```
+### Using the Web Interface
 
-3. In the web interface:
-   - **Configure Credentials**: Enter your IGDB Client ID and Client Secret in the sidebar
-   - **Specify Folder Path**: Enter the path to your games folder
-   - **Connect to IGDB**: Click the "🔌 Connect to IGDB" button
-   - **Scan Folders**: Click "🔍 Scan Folders" to see all game folders
-   - **Process Folders**: Click "🔄 Process All Folders" to search IGDB for all games
-   - **Review and Rename**: Navigate through tabs to review and rename folders
+Once the app is running:
+
+1. **Configure Credentials**: Enter your IGDB Client ID and Client Secret in the sidebar
+2. **Specify Folder Path**: Enter the path to your games folder
+3. **Connect to IGDB**: Click the "🔌 Connect to IGDB" button
+4. **Scan Folders**: Click "🔍 Scan Folders" to see all game folders
+5. **Process Folders**: Click "🔄 Process All Folders" to search IGDB for all games
+6. **Review and Rename**: Navigate through tabs to review and rename folders
 
 ### Environment Variables (Optional)
 
 You can set environment variables to pre-fill the configuration:
 
+**Linux/Mac:**
 ```bash
 export IGDB_CLIENT_ID=your_client_id_here
 export IGDB_CLIENT_SECRET=your_client_secret_here
 export GAMES_FOLDER=/path/to/your/games
-streamlit run app.py
+./run.sh
 ```
 
-Or create a `.env` file in the project directory:
-```env
-IGDB_CLIENT_ID=your_client_id_here
-IGDB_CLIENT_SECRET=your_client_secret_here
-GAMES_FOLDER=/path/to/your/games
+**Windows:**
+```cmd
+set IGDB_CLIENT_ID=your_client_id_here
+set IGDB_CLIENT_SECRET=your_client_secret_here
+set GAMES_FOLDER=C:\path\to\your\games
+run.bat
 ```
 
 ## How It Works
