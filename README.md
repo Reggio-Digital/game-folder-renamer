@@ -1,5 +1,9 @@
 # Game Folder Renamer
 
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
+![Streamlit](https://img.shields.io/badge/streamlit-1.29.0-red.svg)
+
 A web-based tool built with Streamlit that automatically renames your PC game folders using IGDB.com data. It adds release years and cleans up folder names, transforming folders like `Dead.Space-RUNE` into `Dead Space (2008)`.
 
 > **Note**: This tool is designed for organizing archived PC game folders (like GOG downloads stored on a NAS) and not for renaming installed games. It's perfect for cleaning up your PC game backup folders, ensuring consistent naming across your collection.
@@ -14,6 +18,16 @@ A web-based tool built with Streamlit that automatically renames your PC game fo
 - 🧹 Cleans up release group names and version numbers for consistent naming
 - 📊 Real-time progress tracking and statistics
 - ⚡ Simple setup - no Docker required
+
+## Screenshots
+
+> 📸 Screenshots coming soon! Check back after running the app to see the interface in action.
+
+The web interface includes:
+- Clean sidebar configuration
+- Real-time folder scanning and statistics
+- Tabbed results view for different match types
+- Interactive game selection for multiple matches
 
 ## Use Case
 
@@ -44,7 +58,13 @@ It is **not** intended for:
    cd game-folder-renamer
    ```
 
-2. Get your IGDB API credentials:
+2. **(Optional but recommended)** Create a virtual environment:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. Get your IGDB API credentials:
    - Go to [Twitch Developer Console](https://dev.twitch.tv/console/apps)
    - Create a new application
    - Note down your Client ID and Client Secret
@@ -196,6 +216,10 @@ Make sure you've installed all requirements:
 pip install -r requirements.txt
 ```
 
+## Contributing
+
+Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) for details on how to submit pull requests, report bugs, and suggest features.
+
 ## License
 
-MIT License - Feel free to use and modify as needed.
+MIT License - Feel free to use and modify as needed. See [LICENSE](LICENSE) for details.
