@@ -1,19 +1,19 @@
 # Game Folder Renamer
 
-A Docker-based tool that automatically renames your PC game folders using IGDB.com data. It adds release years and cleans up folder names, transforming folders like `Dead.Space-RUNE` into `Dead Space (2008)`.
+A web-based tool built with Streamlit that automatically renames your PC game folders using IGDB.com data. It adds release years and cleans up folder names, transforming folders like `Dead.Space-RUNE` into `Dead Space (2008)`.
 
 > **Note**: This tool is designed for organizing archived PC game folders (like GOG downloads stored on a NAS) and not for renaming installed games. It's perfect for cleaning up your PC game backup folders, ensuring consistent naming across your collection.
 
->
 > **Important**: This tool is specifically for PC games only. It does not support console ROMs, Mac games, or other platforms.
 
 ## Features
 
-- Automatically fetches correct game names and release years from IGDB
-- Handles multiple matches for games (e.g., remakes vs originals)
-- Cleans up release group names and version numbers for consistent naming
-- Cleans up common naming patterns (release groups, dots, underscores)
-- Runs in Docker for easy deployment on any system
+- 🎮 Web-based Streamlit interface for easy interaction
+- 🔍 Automatically fetches correct game names and release years from IGDB
+- 🎯 Handles multiple matches with an intuitive selection UI
+- 🧹 Cleans up release group names and version numbers for consistent naming
+- 📊 Real-time progress tracking and statistics
+- 🐳 Runs in Docker for easy deployment on any system
 
 ## Use Case
 
@@ -31,7 +31,7 @@ It is **not** intended for:
 
 ## Prerequisites
 
-- Docker installed on your system
+- Docker and Docker Compose installed on your system
   - [Install Docker for Windows](https://docs.docker.com/desktop/install/windows-install/)
   - [Install Docker for Mac](https://docs.docker.com/desktop/install/mac-install/)
   - [Install Docker for Linux](https://docs.docker.com/engine/install/)
@@ -52,76 +52,111 @@ It is **not** intended for:
    - Create a new application
    - Note down your Client ID and Client Secret
 
-3. Build the Docker image:
-   ```bash
-   docker-compose build
-   ```
-
-## Usage
-
-### Using Docker Compose
-
-1. Edit the docker-compose.yml file to set your games folder path:
+3. Edit the `docker-compose.yml` file to configure your settings:
    ```yaml
    services:
      game-renamer:
        image: game-renamer
        build: .
+       ports:
+         - "8501:8501"
        environment:
-         - IGDB_CLIENT_ID=your_client_id_here     # Get from Twitch Developer Console
-         - IGDB_CLIENT_SECRET=your_secret_here    # Get from Twitch Developer Console
+         - IGDB_CLIENT_ID=your_client_id_here
+         - IGDB_CLIENT_SECRET=your_client_secret_here
+         - GAMES_FOLDER=/games
        volumes:
-         - "/path/to/games:/games"  # Windows example
+         - "/path/to/your/games:/games"  # Update this path
    ```
 
-2. Run the container:
+4. Build and start the container:
    ```bash
-   docker-compose run --rm -it game-renamer
+   docker-compose up --build
    ```
 
-   The flags:
-   - `--rm`: Automatically remove the container when it exits
-   - `-it`: Enable interactive mode (required for command input)
-
-3. Once the container is running, you'll see an interactive prompt. Type `rename` to start the renaming process:
+5. Open your web browser and navigate to:
    ```
-   Game Folder Renamer - Interactive Mode
-   ------------------------------------
-   Commands:
-     rename  - Scan and rename game folders
-     help    - Show this help message
-     exit    - Exit the container
-   
-   Enter command: rename
+   http://localhost:8501
    ```
 
-### Using Docker directly
+## Usage
 
-Run the container interactively:
+### Web Interface
+
+1. **Configure Credentials**:
+   - If you didn't set them in docker-compose.yml, enter your IGDB Client ID and Client Secret in the sidebar
+   - Specify the games folder path (default: `/games`)
+
+2. **Connect to IGDB**:
+   - Click the "🔌 Connect to IGDB" button in the sidebar
+   - Wait for successful authentication
+
+3. **Scan Folders**:
+   - Click "🔍 Scan Folders" to see all game folders in your directory
+   - View statistics about total folders, already named folders, and folders to process
+
+4. **Process Folders**:
+   - Click "🔄 Process All Folders" to search IGDB for all games
+   - The app will automatically search for each folder and categorize results
+
+5. **Review and Rename**:
+   - **Auto-Renamed Tab**: Single matches that are ready to rename
+   - **Needs Selection Tab**: Multiple matches requiring your selection
+   - **Not Found Tab**: Folders that couldn't be found in IGDB
+   - **Errors Tab**: Any folders that encountered errors
+
+6. **Apply Changes**:
+   - Review each suggestion
+   - Click "✅ Rename" to apply the change
+   - For multiple matches, select the correct game and click "✅ Apply"
+
+### Running Without Docker Compose
+
+You can also run the container directly:
+
 ```bash
-docker run -it --rm \
+docker build -t game-renamer .
+
+docker run -p 8501:8501 \
   -e IGDB_CLIENT_ID=your_id \
   -e IGDB_CLIENT_SECRET=your_secret \
+  -e GAMES_FOLDER=/games \
   -v "/path/to/games:/games" \
   game-renamer
 ```
 
-Then use the `rename` command when you want to process your folders.
+Then open http://localhost:8501 in your browser.
 
-#### Example Commands
+### Local Development (Without Docker)
 
-- `rename` - Start the folder renaming process
-- `help` - Show available commands
-- `exit` - Exit the container
+If you want to run the app locally without Docker:
+
+1. Install requirements:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Set environment variables:
+   ```bash
+   export IGDB_CLIENT_ID=your_id
+   export IGDB_CLIENT_SECRET=your_secret
+   export GAMES_FOLDER=/path/to/games
+   ```
+
+3. Run Streamlit:
+   ```bash
+   streamlit run app.py
+   ```
 
 ## How It Works
 
-1. The script scans the specified games folder
+1. The app scans the specified games folder via the web interface
 2. For each folder:
    - Cleans up the name for searching
-   - Queries IGDB for matching games
-   - If multiple matches are found, prompts for selection
-   - Renames the folder with the correct name and release year
+   - Queries IGDB for matching PC games
+   - Displays results in the web interface
+3. Single matches are shown in the "Auto-Renamed" tab
+4. Multiple matches are shown in the "Needs Selection" tab where you can choose the correct game
+5. Click to rename folders with the correct name and release year
 
 ## Version Numbers
 
@@ -136,7 +171,7 @@ Dead Space (2008)/
 
 This keeps the main folder names clean and consistent while maintaining version information where it belongs - with the game files themselves.
 
-### Example Transformations
+## Example Transformations
 
 ```
 Before                          After
@@ -145,4 +180,40 @@ Dead.Space.v1.2              → Dead Space (2008)
 Warhammer.40000.SM.2-RUNE    → Warhammer 40000 Space Marine II (2024)
 A.Plague.Tale.Innocence      → A Plague Tale Innocence (2019)
 ```
- 
+
+## Features in Detail
+
+### Smart Name Matching
+- Removes common edition suffixes (Enhanced, Definitive, GOTY, etc.)
+- Tries multiple search variations (with/without colons, etc.)
+- Handles release groups and version numbers
+
+### Remake/Remaster Detection
+- Identifies remakes and remasters
+- Shows badges to help distinguish versions
+- Allows you to choose between original and remake releases
+
+### Statistics Dashboard
+- Total folders found
+- Already properly named folders
+- Folders needing processing
+- Processed folders count
+
+## Troubleshooting
+
+### Port Already in Use
+If port 8501 is already in use, you can change it in docker-compose.yml:
+```yaml
+ports:
+  - "8502:8501"  # Use port 8502 instead
+```
+
+### Can't Access Folders
+Make sure the volume mount path is correct and the Docker container has permission to access the folders.
+
+### Authentication Failed
+Double-check your IGDB Client ID and Client Secret. You may need to regenerate them from the Twitch Developer Console.
+
+## License
+
+MIT License - Feel free to use and modify as needed.
