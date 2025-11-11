@@ -1,9 +1,0 @@
-services:
-  game-renamer:
-    image: game-renamer
-    build: .
-    environment:
-      - IGDB_CLIENT_ID=your_client_id_here  # Get from Twitch Developer Console
-      - IGDB_CLIENT_SECRET=your_client_secret_here  # Get from Twitch Developer Console
-    volumes:
-      - "path/to/games:/games"
