@@ -13,7 +13,7 @@ A web-based tool built with Streamlit that automatically renames your PC game fo
 - 🎯 Handles multiple matches with an intuitive selection UI
 - 🧹 Cleans up release group names and version numbers for consistent naming
 - 📊 Real-time progress tracking and statistics
-- 🐳 Runs in Docker for easy deployment on any system
+- ⚡ Simple setup - no Docker required
 
 ## Use Case
 
@@ -31,121 +31,66 @@ It is **not** intended for:
 
 ## Prerequisites
 
-- Docker and Docker Compose installed on your system
-  - [Install Docker for Windows](https://docs.docker.com/desktop/install/windows-install/)
-  - [Install Docker for Mac](https://docs.docker.com/desktop/install/mac-install/)
-  - [Install Docker for Linux](https://docs.docker.com/engine/install/)
+- Python 3.11 or higher
 - IGDB API credentials (free)
   - Sign up at [IGDB](https://api.igdb.com)
   - Create a Twitch application to get your credentials
 
 ## Setup
 
-1. Clone this repository or download the files:
+1. Clone this repository:
    ```bash
    git clone https://github.com/yourusername/game-folder-renamer.git
    cd game-folder-renamer
    ```
 
-2. Get your IGDB API credentials:
-   - Go to [Twitch Developer Console](https://dev.twitch.tv/console/apps)
-   - Create a new application
-   - Note down your Client ID and Client Secret
-
-3. Edit the `docker-compose.yml` file to configure your settings:
-   ```yaml
-   services:
-     game-renamer:
-       image: game-renamer
-       build: .
-       ports:
-         - "8501:8501"
-       environment:
-         - IGDB_CLIENT_ID=your_client_id_here
-         - IGDB_CLIENT_SECRET=your_client_secret_here
-         - GAMES_FOLDER=/games
-       volumes:
-         - "/path/to/your/games:/games"  # Update this path
-   ```
-
-4. Build and start the container:
-   ```bash
-   docker-compose up --build
-   ```
-
-5. Open your web browser and navigate to:
-   ```
-   http://localhost:8501
-   ```
-
-## Usage
-
-### Web Interface
-
-1. **Configure Credentials**:
-   - If you didn't set them in docker-compose.yml, enter your IGDB Client ID and Client Secret in the sidebar
-   - Specify the games folder path (default: `/games`)
-
-2. **Connect to IGDB**:
-   - Click the "🔌 Connect to IGDB" button in the sidebar
-   - Wait for successful authentication
-
-3. **Scan Folders**:
-   - Click "🔍 Scan Folders" to see all game folders in your directory
-   - View statistics about total folders, already named folders, and folders to process
-
-4. **Process Folders**:
-   - Click "🔄 Process All Folders" to search IGDB for all games
-   - The app will automatically search for each folder and categorize results
-
-5. **Review and Rename**:
-   - **Auto-Renamed Tab**: Single matches that are ready to rename
-   - **Needs Selection Tab**: Multiple matches requiring your selection
-   - **Not Found Tab**: Folders that couldn't be found in IGDB
-   - **Errors Tab**: Any folders that encountered errors
-
-6. **Apply Changes**:
-   - Review each suggestion
-   - Click "✅ Rename" to apply the change
-   - For multiple matches, select the correct game and click "✅ Apply"
-
-### Running Without Docker Compose
-
-You can also run the container directly:
-
-```bash
-docker build -t game-renamer .
-
-docker run -p 8501:8501 \
-  -e IGDB_CLIENT_ID=your_id \
-  -e IGDB_CLIENT_SECRET=your_secret \
-  -e GAMES_FOLDER=/games \
-  -v "/path/to/games:/games" \
-  game-renamer
-```
-
-Then open http://localhost:8501 in your browser.
-
-### Local Development (Without Docker)
-
-If you want to run the app locally without Docker:
-
-1. Install requirements:
+2. Install the required packages:
    ```bash
    pip install -r requirements.txt
    ```
 
-2. Set environment variables:
-   ```bash
-   export IGDB_CLIENT_ID=your_id
-   export IGDB_CLIENT_SECRET=your_secret
-   export GAMES_FOLDER=/path/to/games
-   ```
+3. Get your IGDB API credentials:
+   - Go to [Twitch Developer Console](https://dev.twitch.tv/console/apps)
+   - Create a new application
+   - Note down your Client ID and Client Secret
 
-3. Run Streamlit:
+## Usage
+
+1. Start the Streamlit app:
    ```bash
    streamlit run app.py
    ```
+
+2. Open your web browser - Streamlit will automatically open at:
+   ```
+   http://localhost:8501
+   ```
+
+3. In the web interface:
+   - **Configure Credentials**: Enter your IGDB Client ID and Client Secret in the sidebar
+   - **Specify Folder Path**: Enter the path to your games folder
+   - **Connect to IGDB**: Click the "🔌 Connect to IGDB" button
+   - **Scan Folders**: Click "🔍 Scan Folders" to see all game folders
+   - **Process Folders**: Click "🔄 Process All Folders" to search IGDB for all games
+   - **Review and Rename**: Navigate through tabs to review and rename folders
+
+### Environment Variables (Optional)
+
+You can set environment variables to pre-fill the configuration:
+
+```bash
+export IGDB_CLIENT_ID=your_client_id_here
+export IGDB_CLIENT_SECRET=your_client_secret_here
+export GAMES_FOLDER=/path/to/your/games
+streamlit run app.py
+```
+
+Or create a `.env` file in the project directory:
+```env
+IGDB_CLIENT_ID=your_client_id_here
+IGDB_CLIENT_SECRET=your_client_secret_here
+GAMES_FOLDER=/path/to/your/games
+```
 
 ## How It Works
 
@@ -157,6 +102,22 @@ If you want to run the app locally without Docker:
 3. Single matches are shown in the "Auto-Renamed" tab
 4. Multiple matches are shown in the "Needs Selection" tab where you can choose the correct game
 5. Click to rename folders with the correct name and release year
+
+## Interface Overview
+
+### Tabs
+
+- **✅ Auto-Renamed**: Single matches that are ready to rename with one click
+- **🤔 Needs Selection**: Multiple matches requiring your selection from a dropdown
+- **❌ Not Found**: Folders that couldn't be found in IGDB
+- **⚠️ Errors**: Any folders that encountered errors
+
+### Statistics Dashboard
+
+- Total folders found
+- Already properly named folders
+- Folders needing processing
+- Processed folders count
 
 ## Version Numbers
 
@@ -193,26 +154,25 @@ A.Plague.Tale.Innocence      → A Plague Tale Innocence (2019)
 - Shows badges to help distinguish versions
 - Allows you to choose between original and remake releases
 
-### Statistics Dashboard
-- Total folders found
-- Already properly named folders
-- Folders needing processing
-- Processed folders count
-
 ## Troubleshooting
 
 ### Port Already in Use
-If port 8501 is already in use, you can change it in docker-compose.yml:
-```yaml
-ports:
-  - "8502:8501"  # Use port 8502 instead
+If port 8501 is already in use, you can specify a different port:
+```bash
+streamlit run app.py --server.port 8502
 ```
 
 ### Can't Access Folders
-Make sure the volume mount path is correct and the Docker container has permission to access the folders.
+Make sure you have read/write permissions for the games folder path you specify.
 
 ### Authentication Failed
 Double-check your IGDB Client ID and Client Secret. You may need to regenerate them from the Twitch Developer Console.
+
+### Module Not Found
+Make sure you've installed all requirements:
+```bash
+pip install -r requirements.txt
+```
 
 ## License
 
