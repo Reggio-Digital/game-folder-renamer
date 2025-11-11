@@ -40,7 +40,7 @@ It is **not** intended for:
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/yourusername/game-folder-renamer.git
+   git clone https://github.com/Reggio-Digital/game-folder-renamer.git
    cd game-folder-renamer
    ```
 

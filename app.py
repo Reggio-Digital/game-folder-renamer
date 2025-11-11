@@ -29,7 +29,7 @@ with st.sidebar:
     # Try to get credentials from environment variables
     default_client_id = os.environ.get('IGDB_CLIENT_ID', '')
     default_client_secret = os.environ.get('IGDB_CLIENT_SECRET', '')
-    default_games_folder = os.environ.get('GAMES_FOLDER', '/games')
+    default_games_folder = os.environ.get('GAMES_FOLDER', os.path.expanduser('~'))
 
     client_id = st.text_input(
         "IGDB Client ID",
