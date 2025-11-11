@@ -2,7 +2,6 @@ import os
 import re
 from datetime import datetime
 import requests
-from typing import Optional, Tuple
 import time
 
 class IGDBClient:
