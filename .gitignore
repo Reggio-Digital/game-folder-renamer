@@ -39,3 +39,7 @@ Thumbs.db
 
 # Environment variables
 .env
+
+# Configuration files (API keys)
+.game_renamer_config.yaml
+*_config.yaml
