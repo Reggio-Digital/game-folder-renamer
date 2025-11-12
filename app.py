@@ -69,10 +69,10 @@ if 'client_secret' not in st.session_state:
 # Load saved configuration
 saved_config = load_config()
 
-# Get credentials from saved config, environment variables, or defaults
-default_client_id = saved_config.get('client_id', os.environ.get('IGDB_CLIENT_ID', ''))
-default_client_secret = saved_config.get('client_secret', os.environ.get('IGDB_CLIENT_SECRET', ''))
-default_games_folder = saved_config.get('games_folder', os.environ.get('GAMES_FOLDER', os.path.expanduser('~')))
+# Get credentials from saved config or use defaults
+default_client_id = saved_config.get('client_id', '')
+default_client_secret = saved_config.get('client_secret', '')
+default_games_folder = saved_config.get('games_folder', os.path.expanduser('~'))
 
 # Sidebar for configuration
 with st.sidebar:
