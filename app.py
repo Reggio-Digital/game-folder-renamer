@@ -10,6 +10,21 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Cached function to create and authenticate IGDB client
+@st.cache_resource
+def get_authenticated_igdb_client(client_id: str, client_secret: str):
+    """Create and authenticate IGDB client with forever caching"""
+    client = IGDBClient(client_id, client_secret)
+    client.authenticate()
+    return client
+
+# Cached function for game searches
+@st.cache_data(ttl=None)  # ttl=None means cache forever
+def search_game_cached(client_id: str, client_secret: str, game_name: str):
+    """Search for a game with forever caching"""
+    client = get_authenticated_igdb_client(client_id, client_secret)
+    return client.search_game(game_name)
+
 # Initialize session state
 if 'igdb_client' not in st.session_state:
     st.session_state.igdb_client = None
@@ -21,6 +36,10 @@ if 'processing_results' not in st.session_state:
     st.session_state.processing_results = {}
 if 'pending_selections' not in st.session_state:
     st.session_state.pending_selections = {}
+if 'client_id' not in st.session_state:
+    st.session_state.client_id = None
+if 'client_secret' not in st.session_state:
+    st.session_state.client_secret = None
 
 # Sidebar for configuration
 with st.sidebar:
@@ -31,30 +50,33 @@ with st.sidebar:
     default_client_secret = os.environ.get('IGDB_CLIENT_SECRET', '')
     default_games_folder = os.environ.get('GAMES_FOLDER', os.path.expanduser('~'))
 
-    client_id = st.text_input(
-        "IGDB Client ID",
-        value=default_client_id,
-        type="password",
-        help="Get this from Twitch Developer Console"
-    )
+    # Wrap configuration in a form to prevent unnecessary reruns
+    with st.form("config_form"):
+        client_id = st.text_input(
+            "IGDB Client ID",
+            value=default_client_id,
+            type="password",
+            help="Get this from Twitch Developer Console"
+        )
 
-    client_secret = st.text_input(
-        "IGDB Client Secret",
-        value=default_client_secret,
-        type="password",
-        help="Get this from Twitch Developer Console"
-    )
+        client_secret = st.text_input(
+            "IGDB Client Secret",
+            value=default_client_secret,
+            type="password",
+            help="Get this from Twitch Developer Console"
+        )
 
-    games_folder = st.text_input(
-        "Games Folder Path",
-        value=default_games_folder,
-        help="Path to the folder containing game folders to rename"
-    )
+        games_folder = st.text_input(
+            "Games Folder Path",
+            value=default_games_folder,
+            help="Path to the folder containing game folders to rename"
+        )
 
-    st.divider()
+        # Submit button for the form
+        submitted = st.form_submit_button("🔌 Connect to IGDB", use_container_width=True)
 
-    # Initialize button
-    if st.button("🔌 Connect to IGDB", use_container_width=True):
+    # Handle form submission
+    if submitted:
         if not client_id or not client_secret:
             st.error("Please provide both Client ID and Client Secret")
         elif not os.path.exists(games_folder):
@@ -62,10 +84,12 @@ with st.sidebar:
         else:
             try:
                 with st.spinner("Authenticating with IGDB..."):
-                    igdb_client = IGDBClient(client_id, client_secret)
-                    igdb_client.authenticate()
+                    # Use cached authentication
+                    igdb_client = get_authenticated_igdb_client(client_id, client_secret)
                     st.session_state.igdb_client = igdb_client
                     st.session_state.renamer = GameFolderRenamer(igdb_client, games_folder)
+                    st.session_state.client_id = client_id
+                    st.session_state.client_secret = client_secret
                 st.success("✅ Connected successfully!")
                 st.rerun()
             except Exception as e:
@@ -167,8 +191,12 @@ if st.session_state.folders and 'processing_mode' in st.session_state and st.ses
         status_text.text(f"Processing {idx + 1}/{total}: {folder_name}")
         progress_bar.progress((idx + 1) / total)
 
-        # Search for game
-        result = st.session_state.igdb_client.search_game(folder_name)
+        # Search for game using cached function
+        result = search_game_cached(
+            st.session_state.client_id,
+            st.session_state.client_secret,
+            folder_name
+        )
         st.session_state.processing_results[folder_name] = result
 
     status_text.text("Processing complete!")
