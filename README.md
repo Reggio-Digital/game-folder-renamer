@@ -107,32 +107,15 @@ If you prefer to run manually:
 
 Once the app is running:
 
-1. **Configure Credentials**: Enter your IGDB Client ID and Client Secret in the sidebar
-2. **Specify Folder Path**: Enter the path to your games folder
-3. **Connect to IGDB**: Click the "🔌 Connect to IGDB" button
-4. **Scan Folders**: Click "🔍 Scan Folders" to see all game folders
-5. **Process Folders**: Click "🔄 Process All Folders" to search IGDB for all games
-6. **Review and Rename**: Navigate through tabs to review and rename folders
+1. **Enter API Credentials**: Follow the on-screen instructions to get your free IGDB API credentials
+2. **Configure Settings**: Enter your Client ID, Client Secret, and games folder path
+3. **Save Settings**: Check "Save these settings for next time" to remember your configuration
+4. **Connect to IGDB**: Click the "🔌 Connect to IGDB" button
+5. **Scan Folders**: Click "🔍 Scan Folders" to see all game folders
+6. **Process Folders**: Click "🔄 Process All Folders" to search IGDB for all games
+7. **Review and Rename**: Navigate through tabs to review and rename folders
 
-### Environment Variables (Optional)
-
-You can set environment variables to pre-fill the configuration:
-
-**Linux/Mac:**
-```bash
-export IGDB_CLIENT_ID=your_client_id_here
-export IGDB_CLIENT_SECRET=your_client_secret_here
-export GAMES_FOLDER=/path/to/your/games
-./run.sh
-```
-
-**Windows:**
-```cmd
-set IGDB_CLIENT_ID=your_client_id_here
-set IGDB_CLIENT_SECRET=your_client_secret_here
-set GAMES_FOLDER=C:\path\to\your\games
-run.bat
-```
+Your settings will be saved to `~/.game_renamer_config.yaml` and automatically loaded next time you run the app.
 
 ## How It Works
 
