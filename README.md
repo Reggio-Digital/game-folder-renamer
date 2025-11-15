@@ -4,74 +4,50 @@
 ![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
 ![Streamlit](https://img.shields.io/badge/streamlit-1.29.0-red.svg)
 
-A web-based tool built with Streamlit that automatically renames your PC game folders using IGDB.com data. It adds release years and cleans up folder names, transforming folders like `Dead.Space-RUNE` into `Dead Space (2008)`.
+A modern web-based tool that automatically renames PC game folders with clean, consistent names using data from IGDB (Internet Game Database). Transform messy folder names like `Dead.Space.v1.2-RUNE` into properly formatted names like `Dead Space (2008)`.
 
-> **Note**: This tool is designed for organizing archived PC game folders (like GOG downloads stored on a NAS) and not for renaming installed games. It's perfect for cleaning up your PC game backup folders, ensuring consistent naming across your collection.
+## Overview
 
-> **Important**: This tool is specifically for PC games only. It does not support console ROMs, Mac games, or other platforms.
+Game Folder Renamer is designed for organizing archived PC game collections (GOG downloads, Steam backups, etc.) stored on local drives or NAS devices. It provides a clean, intuitive web interface built with Streamlit that connects to IGDB's comprehensive game database to fetch accurate game names and release years.
+
+**What it does:**
+- Scans your game folders and intelligently matches them with IGDB data
+- Removes release group tags, version numbers, and other clutter
+- Adds release years for easy chronological organization
+- Handles multiple matches with an interactive selection interface
+- Caches API results for fast, efficient processing
+
+**What it doesn't do:**
+- Rename installed games or modify active game installations
+- Support console ROMs or non-PC platforms
+- Modify game files (only renames folders)
 
 ## Features
 
-- 🎮 Web-based Streamlit interface for easy interaction
-- 🔍 Automatically fetches correct game names and release years from IGDB
-- 🎯 Handles multiple matches with an intuitive selection UI
-- 🧹 Cleans up release group names and version numbers for consistent naming
-- 📊 Real-time progress tracking and statistics
-- ⚡ Simple setup - no Docker required
-
-## Screenshots
-
-> 📸 Screenshots coming soon! Check back after running the app to see the interface in action.
-
-The web interface includes:
-- Clean sidebar configuration
-- Real-time folder scanning and statistics
-- Tabbed results view for different match types
-- Interactive game selection for multiple matches
-
-## Use Case
-
-This tool is ideal for scenarios like:
-- Organizing PC game downloads (GOG, Steam backups, etc.) in your backup storage
-- Maintaining a clean game archive on your NAS
-- Standardizing folder names in your game collection
-
-It is **not** intended for:
-- Renaming installed games
-- Modifying game installation directories
-- Renaming active game folders
-- Console ROMs or emulator games
-- Mac or other non-PC platforms
+- **Modern Web Interface** - Clean, responsive Streamlit UI accessible from any browser
+- **Smart Matching** - Intelligent name parsing with multiple search variations for accurate results
+- **Persistent Configuration** - YAML-based settings storage for quick startup
+- **Performance Optimized** - Built-in caching system for fast repeated operations
+- **Multiple Match Handling** - Interactive selection UI when multiple games match
+- **Real-time Progress** - Live progress tracking and statistics during processing
+- **Remake/Remaster Detection** - Identifies and labels game remakes and remasters
+- **Zero Docker** - Simple Python-based setup, no containers required
 
 ## Prerequisites
 
-- Python 3.11 or higher
-- IGDB API credentials (free)
-  - Sign up at [IGDB](https://api.igdb.com)
-  - Create a Twitch application to get your credentials
+- **Python 3.11+** - [Download Python](https://www.python.org/downloads/)
+- **IGDB API Credentials** - Free credentials from [Twitch Developer Console](https://dev.twitch.tv/console/apps)
 
-## Setup
+## Quick Start
 
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/Reggio-Digital/game-folder-renamer.git
-   cd game-folder-renamer
-   ```
+### 1. Clone the Repository
 
-2. **(Optional but recommended)** Create a virtual environment:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+```bash
+git clone https://github.com/Reggio-Digital/game-folder-renamer.git
+cd game-folder-renamer
+```
 
-3. Get your IGDB API credentials:
-   - Go to [Twitch Developer Console](https://dev.twitch.tv/console/apps)
-   - Create a new application
-   - Note down your Client ID and Client Secret
-
-## Usage
-
-### Quick Start (Recommended)
+### 2. Run the Application
 
 **Linux/Mac:**
 ```bash
@@ -79,130 +55,277 @@ It is **not** intended for:
 ```
 
 **Windows:**
-```bash
+```cmd
 run.bat
 ```
 
 The startup script will:
-- Check if Python is installed
-- Automatically install dependencies if needed
-- Start the Streamlit app
-- Open your browser to http://localhost:8501
+- Verify Python installation
+- Auto-install dependencies if needed
+- Launch the Streamlit app
+- Open your browser to `http://localhost:8501`
 
-### Manual Start
+### 3. Get IGDB API Credentials
 
-If you prefer to run manually:
+1. Visit the [Twitch Developer Console](https://dev.twitch.tv/console/apps)
+2. Log in with your Twitch account (create one if needed - it's free)
+3. Click **"Register Your Application"**
+4. Fill in the application form:
+   - **Name:** Game Folder Renamer (or any name)
+   - **OAuth Redirect URLs:** `http://localhost`
+   - **Category:** Application Integration
+5. Click **"Create"** then **"Manage"**
+6. Copy your **Client ID** and **Client Secret**
 
-1. Install the required packages:
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 4. Configure the Application
 
-2. Start the Streamlit app:
-   ```bash
-   streamlit run app.py
-   ```
+On first launch, you'll see a setup screen:
 
-### Using the Web Interface
+1. Enter your **Client ID** and **Client Secret**
+2. Specify the path to your games folder
+3. Check **"Save these settings for next time"** to persist your configuration
+4. Click **"Connect to IGDB"**
 
-Once the app is running:
+Your settings are saved to `~/.game_renamer_config.yaml` and will be automatically loaded on subsequent runs.
 
-1. **Enter API Credentials**: Follow the on-screen instructions to get your free IGDB API credentials
-2. **Configure Settings**: Enter your Client ID, Client Secret, and games folder path
-3. **Save Settings**: Check "Save these settings for next time" to remember your configuration
-4. **Connect to IGDB**: Click the "🔌 Connect to IGDB" button
-5. **Scan Folders**: Click "🔍 Scan Folders" to see all game folders
-6. **Process Folders**: Click "🔄 Process All Folders" to search IGDB for all games
-7. **Review and Rename**: Navigate through tabs to review and rename folders
+## Usage Guide
 
-Your settings will be saved to `~/.game_renamer_config.yaml` and automatically loaded next time you run the app.
+### Basic Workflow
 
-## How It Works
+1. **Connect** - Enter API credentials and games folder path
+2. **Scan** - Click "🔍 Scan Folders" to discover all game folders
+3. **Process** - Click "🔄 Process All Folders" to search IGDB for matches
+4. **Review** - Navigate through tabs to review results
+5. **Rename** - Click rename buttons to apply changes
 
-1. The app scans the specified games folder via the web interface
-2. For each folder:
-   - Cleans up the name for searching
-   - Queries IGDB for matching PC games
-   - Displays results in the web interface
-3. Single matches are shown in the "Auto-Renamed" tab
-4. Multiple matches are shown in the "Needs Selection" tab where you can choose the correct game
-5. Click to rename folders with the correct name and release year
+### Understanding the Results
 
-## Interface Overview
+Results are organized into four tabs:
 
-### Tabs
+#### ✅ Auto-Renamed
+Single matches that are ready to rename immediately. These are high-confidence matches where IGDB found exactly one PC game matching the folder name.
 
-- **✅ Auto-Renamed**: Single matches that are ready to rename with one click
-- **🤔 Needs Selection**: Multiple matches requiring your selection from a dropdown
-- **❌ Not Found**: Folders that couldn't be found in IGDB
-- **⚠️ Errors**: Any folders that encountered errors
+#### 🤔 Needs Selection
+Folders with multiple potential matches. Use the dropdown menu to select the correct game from the list. Remakes and remasters are clearly labeled.
+
+#### ❌ Not Found
+Folders that couldn't be matched in the IGDB database. These may require manual renaming or may not be in IGDB.
+
+#### ⚠️ Errors
+Folders that encountered errors during processing. Check the error messages for details.
 
 ### Statistics Dashboard
 
-- Total folders found
-- Already properly named folders
-- Folders needing processing
-- Processed folders count
+The dashboard displays:
+- **Total Folders** - Number of folders found in the directory
+- **Already Named** - Folders already in the correct format `Game Name (YYYY)`
+- **To Process** - Folders that need to be processed
+- **Processed** - Folders that have been searched in IGDB
 
-## Version Numbers
+## How It Works
 
-For better organization, it's recommended to keep version information inside the game folder rather than in the folder name. For example:
+### Name Cleaning Algorithm
 
-```
-Dead Space (2008)/
-├── Dead Space v1.2.exe
-├── version.txt
-└── ...
-```
+The application intelligently cleans folder names before searching:
 
-This keeps the main folder names clean and consistent while maintaining version information where it belongs - with the game files themselves.
+1. **Removes release group tags** - `-RUNE`, `-CODEX`, etc.
+2. **Strips version numbers** - `v1.2`, `v1.0.12`, etc.
+3. **Removes edition suffixes** - Enhanced Edition, Definitive Edition, GOTY, etc.
+4. **Normalizes separators** - Converts dots and underscores to spaces
+5. **Tries multiple variations** - With/without colons, different formats
+
+### API Search Strategy
+
+For each folder, the app:
+
+1. Generates multiple search variations from the cleaned name
+2. Queries IGDB for PC games (platform ID: 6, category: main game)
+3. Returns up to 15 matches, sorted by relevance
+4. Caches results to avoid redundant API calls
+5. Identifies remakes/remasters using IGDB's version parent field
+
+### Caching System
+
+The application uses Streamlit's built-in caching:
+
+- **Authentication tokens** - Cached for the session lifetime
+- **Game searches** - Cached permanently until app restart
+- **Configuration** - Persisted to YAML file on disk
 
 ## Example Transformations
 
 ```
-Before                          After
--------                         -----
-Dead.Space.v1.2              → Dead Space (2008)
-Warhammer.40000.SM.2-RUNE    → Warhammer 40000 Space Marine II (2024)
-A.Plague.Tale.Innocence      → A Plague Tale Innocence (2019)
+Before                                  After
+────────────────────────────────────    ─────────────────────────────────
+Dead.Space.v1.2-RUNE                 →  Dead Space (2008)
+Warhammer.40000.Space.Marine.2-RUNE  →  Warhammer 40000 Space Marine II (2024)
+A.Plague.Tale.Innocence              →  A Plague Tale Innocence (2019)
+Hades.Enhanced.Edition               →  Hades (2020)
+Portal.2.GOTY                        →  Portal 2 (2011)
 ```
 
-## Features in Detail
+## Manual Installation
 
-### Smart Name Matching
-- Removes common edition suffixes (Enhanced, Definitive, GOTY, etc.)
-- Tries multiple search variations (with/without colons, etc.)
-- Handles release groups and version numbers
+If you prefer manual setup instead of using the startup scripts:
 
-### Remake/Remaster Detection
-- Identifies remakes and remasters
-- Shows badges to help distinguish versions
-- Allows you to choose between original and remake releases
+```bash
+# Create virtual environment (recommended)
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the application
+streamlit run app.py
+```
+
+## Configuration File
+
+Settings are stored in `~/.game_renamer_config.yaml`:
+
+```yaml
+client_id: your_client_id_here
+client_secret: your_client_secret_here
+games_folder: /path/to/your/games
+```
+
+You can edit this file directly or use the in-app configuration interface.
 
 ## Troubleshooting
 
 ### Port Already in Use
-If port 8501 is already in use, you can specify a different port:
+
+If port 8501 is already in use, specify a different port:
+
 ```bash
 streamlit run app.py --server.port 8502
 ```
 
-### Can't Access Folders
-Make sure you have read/write permissions for the games folder path you specify.
-
 ### Authentication Failed
-Double-check your IGDB Client ID and Client Secret. You may need to regenerate them from the Twitch Developer Console.
+
+- Double-check your Client ID and Client Secret
+- Ensure there are no extra spaces when copying credentials
+- Try regenerating credentials from the Twitch Developer Console
+- Verify your internet connection
+
+### Permission Errors
+
+Ensure you have read/write permissions for:
+- The games folder you're trying to rename
+- Your home directory (for storing `~/.game_renamer_config.yaml`)
 
 ### Module Not Found
-Make sure you've installed all requirements:
+
+Make sure all dependencies are installed:
+
 ```bash
 pip install -r requirements.txt
 ```
 
+### Games Not Found in IGDB
+
+Some games may not be in the IGDB database, particularly:
+- Very old or obscure games
+- Newly released games (database may lag by a few days)
+- Games with unusual or localized names
+
+Try searching IGDB manually to verify if the game exists in their database.
+
+## Technical Details
+
+### Architecture
+
+- **Frontend:** Streamlit web framework
+- **API Client:** Custom IGDB wrapper with OAuth 2.0 authentication
+- **Data Storage:** YAML configuration files
+- **Caching:** Streamlit's `@st.cache_resource` and `@st.cache_data`
+
+### API Usage
+
+The application uses IGDB API v4 with the following endpoints:
+- **Authentication:** Twitch OAuth 2.0 token endpoint
+- **Search:** IGDB games endpoint with search and filtering
+
+API queries are filtered to:
+- **Platform:** PC only (platform ID: 6)
+- **Category:** Main games only (category: 0)
+- **Limit:** 15 results per search
+
+### Dependencies
+
+- **streamlit** - Web framework for the UI
+- **requests** - HTTP library for API calls
+- **PyYAML** - YAML configuration file handling
+
+## Best Practices
+
+### Version Information
+
+Keep version numbers inside game folders rather than in folder names:
+
+```
+Good:
+Dead Space (2008)/
+├── Dead Space v1.2.exe
+├── version.txt
+└── game files...
+
+Avoid:
+Dead Space v1.2 (2008)/
+```
+
+This maintains clean, consistent folder names while preserving version information where it belongs.
+
+### Backup First
+
+Always keep a backup of your game folders before running bulk rename operations. While the tool is designed to be safe, having a backup provides peace of mind.
+
+### Organization Tips
+
+- Use the tool on archived/backup game folders, not active installations
+- Process folders in batches if you have a large collection
+- Review "Needs Selection" items carefully to ensure correct game selection
+- Use the statistics dashboard to track your progress
+
 ## Contributing
 
-Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) for details on how to submit pull requests, report bugs, and suggest features.
+Contributions are welcome! Please feel free to submit issues, feature requests, or pull requests.
+
+### Development Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/Reggio-Digital/game-folder-renamer.git
+cd game-folder-renamer
+
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run in development mode
+streamlit run app.py
+```
 
 ## License
 
-MIT License - Feel free to use and modify as needed. See [LICENSE](LICENSE) for details.
+MIT License - See [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Game data provided by [IGDB](https://www.igdb.com/)
+- Built with [Streamlit](https://streamlit.io/)
+- Authentication via [Twitch Developer API](https://dev.twitch.tv/)
+
+## Support
+
+- **Issues:** [GitHub Issues](https://github.com/Reggio-Digital/game-folder-renamer/issues)
+- **Documentation:** This README and in-app help tooltips
+- **IGDB API:** [IGDB API Documentation](https://api-docs.igdb.com/)
+
+---
+
+Made with ❤️ for game collectors and digital archivists
