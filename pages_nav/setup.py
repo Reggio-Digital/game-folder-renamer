@@ -37,8 +37,8 @@ def get_authenticated_igdb_client(client_id: str, client_secret: str):
 
 def show():
     """Display the Setup/Configuration page"""
-    st.title("🔑 API Configuration")
-    st.markdown("Configure your IGDB API credentials and games folder path")
+    st.title("🔑 Setup")
+    st.markdown("Get started by connecting to IGDB and selecting your games folder")
 
     # Load saved configuration
     saved_config = load_config()
@@ -69,57 +69,57 @@ def show():
                 st.rerun()
 
         st.divider()
-        st.info("💡 You're all set! Use the sidebar to navigate to 'Scan & Process' to start renaming your game folders.")
+        st.success("🎉 **You're all set!**")
+        st.info("👉 Go to **Home** to see your next steps, or jump straight to **Scan & Process** to start renaming!")
     else:
         # Configuration instructions
         st.divider()
 
-        with st.expander("ℹ️ How to get your API credentials", expanded=True):
+        with st.expander("ℹ️ How to get free API credentials (2 minutes)", expanded=False):
             st.markdown("""
-            To use this app, you need to get free API credentials from IGDB (Internet Game Database).
+            **Quick guide to get your free IGDB credentials:**
 
-            **Step-by-step guide:**
-            1. Go to the [Twitch Developer Console](https://dev.twitch.tv/console/apps)
-            2. Log in with your Twitch account (create one if needed - it's free)
-            3. Click "Register Your Application"
-            4. Fill in the form:
-               - **Name**: Game Folder Renamer (or any name you like)
-               - **OAuth Redirect URLs**: http://localhost
-               - **Category**: Application Integration
-            5. Click "Create" and then "Manage"
-            6. Copy your **Client ID** and **Client Secret**
-            7. Enter them below and click "Connect to IGDB"
+            1. **Visit** [Twitch Developer Console](https://dev.twitch.tv/console/apps)
+            2. **Login** with Twitch (or create a free account)
+            3. **Click** "Register Your Application"
+            4. **Fill in:**
+               - Name: `Game Folder Renamer`
+               - OAuth Redirect: `http://localhost`
+               - Category: `Application Integration`
+            5. **Click** "Create" then "Manage"
+            6. **Copy** your Client ID and Client Secret
+            7. **Paste** them in the form below
+
+            That's it! The credentials are free and work forever.
             """)
 
         st.divider()
 
         # Configuration form
         with st.form("setup_form"):
-            st.write("### Enter Your Credentials")
+            st.write("### 🔐 API Credentials")
 
             client_id = st.text_input(
-                "IGDB Client ID",
+                "Client ID",
                 value=default_client_id,
                 type="password",
-                placeholder="Enter your Client ID from Twitch Developer Console",
-                help="Your Client ID from Twitch Developer Console"
+                placeholder="Paste your Client ID here"
             )
 
             client_secret = st.text_input(
-                "IGDB Client Secret",
+                "Client Secret",
                 value=default_client_secret,
                 type="password",
-                placeholder="Enter your Client Secret from Twitch Developer Console",
-                help="Your Client Secret from Twitch Developer Console"
+                placeholder="Paste your Client Secret here"
             )
 
-            st.write("### Specify Games Folder")
+            st.write("### 📁 Games Folder")
 
             games_folder = st.text_input(
-                "Games Folder Path",
+                "Folder Path",
                 value=default_games_folder,
                 placeholder="e.g., /home/user/games or C:\\Games",
-                help="Full path to the folder containing your game folders"
+                help="The folder that contains all your game folders"
             )
 
             # Save settings option

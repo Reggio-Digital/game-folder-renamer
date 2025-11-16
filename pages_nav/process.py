@@ -10,13 +10,17 @@ def search_game_cached(client_id: str, client_secret: str, game_name: str):
 
 def show():
     """Display the Scan & Process page"""
-    st.title("🎮 Scan & Process Game Folders")
-    st.markdown("Scan your games folder and rename folders using IGDB data")
+    st.title("🎮 Scan & Process")
+    st.markdown("Scan your games folder and rename folders with accurate game data")
 
     # Check if connected
     if not st.session_state.get('igdb_client'):
-        st.warning("⚠️ Not connected to IGDB")
-        st.info("Please configure your API credentials in the Setup page first.")
+        st.warning("⚠️ You need to connect to IGDB first")
+        st.info("👉 Go to the **Setup** page to configure your credentials")
+
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown("**New user?** Go to **Home** to see the getting started guide")
         st.stop()
 
     # Action buttons

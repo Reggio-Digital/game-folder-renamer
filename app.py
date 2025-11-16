@@ -1,7 +1,7 @@
 import streamlit as st
 
 # Import page modules
-from pages_nav import setup, process, about
+from pages_nav import home, setup, process, about
 
 # Page configuration
 st.set_page_config(
@@ -28,42 +28,54 @@ if 'client_secret' not in st.session_state:
     st.session_state.client_secret = None
 
 # Define pages for navigation
-pages = {
-    "Main": [
-        st.Page(setup.show, title="Setup", icon="🔑"),
-        st.Page(process.show, title="Scan & Process", icon="🎮"),
-    ],
-    "Information": [
-        st.Page(about.show, title="About", icon="ℹ️"),
-    ]
-}
+pages = [
+    st.Page(home.show, title="Home", icon="🏠", default=True),
+    st.Page(setup.show, title="Setup", icon="🔑"),
+    st.Page(process.show, title="Scan & Process", icon="🎮"),
+    st.Page(about.show, title="About", icon="ℹ️"),
+]
 
 # Create navigation
 pg = st.navigation(pages)
 
-# Show connection status in sidebar
+# Show progress indicator in sidebar
 with st.sidebar:
-    st.header("⚙️ Configuration Status")
+    st.header("📋 Progress")
 
-    if st.session_state.igdb_client:
-        st.success("✅ Connected to IGDB")
-        if st.session_state.renamer:
-            st.info(f"📁 Folder: {st.session_state.renamer.base_path}")
+    # Calculate progress steps
+    is_connected = st.session_state.get('igdb_client') is not None
+    has_folders = len(st.session_state.get('folders', [])) > 0
+    has_results = len(st.session_state.get('processing_results', {})) > 0
+
+    # Step 1: Connect
+    if is_connected:
+        st.success("✅ Step 1: Connected to IGDB")
     else:
-        st.warning("⚠️ Not connected")
-        st.info("Configure in Setup page")
+        st.warning("⏳ Step 1: Connect to IGDB")
+
+    # Step 2: Scan
+    if has_folders:
+        st.success(f"✅ Step 2: Scanned ({len(st.session_state.folders)} folders)")
+    else:
+        if is_connected:
+            st.info("⏳ Step 2: Scan your folders")
+        else:
+            st.text("⏸️ Step 2: Scan your folders")
+
+    # Step 3: Process
+    if has_results:
+        st.success(f"✅ Step 3: Processed ({len(st.session_state.processing_results)} results)")
+    else:
+        if has_folders:
+            st.info("⏳ Step 3: Process folders")
+        else:
+            st.text("⏸️ Step 3: Process folders")
 
     st.divider()
 
-    # Quick help
-    with st.expander("ℹ️ Quick Guide"):
-        st.markdown("""
-        **Getting Started:**
-        1. Get IGDB credentials from [Twitch](https://dev.twitch.tv/console)
-        2. Enter credentials in **Setup** page
-        3. Go to **Scan & Process** to rename folders
-        4. Check **About** for more info
-        """)
+    # Show current folder if connected
+    if st.session_state.get('renamer'):
+        st.caption(f"📁 **Folder:**\n{st.session_state.renamer.base_path}")
 
 # Run the selected page
 pg.run()
