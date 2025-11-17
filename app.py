@@ -1,7 +1,7 @@
 import streamlit as st
 
 # Import page modules
-from pages_nav import home, setup, process
+from pages_nav import home, igdb_api, platform_folders, rename_templates, process
 
 # Page configuration
 st.set_page_config(
@@ -34,7 +34,9 @@ if 'igdb_connection_failed' not in st.session_state:
 # Define pages for navigation
 pages = [
     st.Page(home.show, title="Home", icon="🏠", url_path="home", default=True),
-    st.Page(setup.show, title="Setup", icon="🔑", url_path="setup"),
+    st.Page(igdb_api.show, title="IGDB API", icon="🔐", url_path="igdb-api"),
+    st.Page(platform_folders.show, title="Platform Folders", icon="📁", url_path="platform-folders"),
+    st.Page(rename_templates.show, title="Rename Templates", icon="🎨", url_path="rename-templates"),
     st.Page(process.show, title="Scan & Process", icon="🎮", url_path="process"),
 ]
 

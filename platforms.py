@@ -23,7 +23,7 @@ def _fetch_platforms_cached(client_id: str, access_token: str) -> List[Dict]:
     }
 
     body = """
-        fields id, name, slug, abbreviation, alternative_name, platform_family;
+        fields id, name, slug, abbreviation, alternative_name, platform_family, platform_logo.image_id;
         limit 500;
         sort name asc;
     """

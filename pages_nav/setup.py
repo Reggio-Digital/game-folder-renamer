@@ -7,7 +7,7 @@ from game_renamer import IGDBClient
 from platforms import PlatformManager
 
 # Configuration file management
-CONFIG_FILE = Path.home() / '.game_renamer_config.yaml'
+CONFIG_FILE = Path.home() / '.game_folder_renamer_config.yaml'
 
 
 def load_config() -> Dict[str, Any]:
@@ -52,6 +52,74 @@ def save_config(config: Dict[str, Any]) -> bool:
     except yaml.YAMLError as e:
         st.error(f"❌ Failed to serialize config: {str(e)}")
         return False
+
+
+def get_template_for_platform(platform_id: int) -> str:
+    """Get the rename template for a specific platform
+
+    Args:
+        platform_id: IGDB platform ID
+
+    Returns:
+        Template string for the platform, or default template if not configured
+    """
+    from game_renamer import DEFAULT_RENAME_TEMPLATE
+
+    config = load_config()
+    templates = config.get('rename_templates', {})
+
+    # Check for platform-specific template
+    platform_templates = templates.get('platforms', {})
+    if platform_id in platform_templates:
+        return platform_templates[platform_id]
+
+    # Fall back to default template
+    return templates.get('default', DEFAULT_RENAME_TEMPLATE)
+
+
+def save_template_for_platform(platform_id: int, template: str) -> bool:
+    """Save a rename template for a specific platform
+
+    Args:
+        platform_id: IGDB platform ID
+        template: Template string
+
+    Returns:
+        True if successful, False otherwise
+    """
+    config = load_config()
+
+    # Initialize templates structure if not exists
+    if 'rename_templates' not in config:
+        config['rename_templates'] = {'platforms': {}}
+    if 'platforms' not in config['rename_templates']:
+        config['rename_templates']['platforms'] = {}
+
+    # Save template
+    config['rename_templates']['platforms'][platform_id] = template
+
+    return save_config(config)
+
+
+def save_default_template(template: str) -> bool:
+    """Save the default rename template
+
+    Args:
+        template: Template string
+
+    Returns:
+        True if successful, False otherwise
+    """
+    config = load_config()
+
+    # Initialize templates structure if not exists
+    if 'rename_templates' not in config:
+        config['rename_templates'] = {}
+
+    # Save default template
+    config['rename_templates']['default'] = template
+
+    return save_config(config)
 
 
 @st.cache_resource
@@ -197,6 +265,7 @@ def _render_folder_management() -> None:
         # Combine with separator
         platform_options = popular_platforms + [(-1, "────────────────────")] + other_platforms
         platform_lookup = {p['id']: platform_manager.get_platform_display_name(p) for p in platforms}
+        platform_data_lookup = {p['id']: p for p in platforms}  # Full platform data for logos
     except Exception as e:
         st.error(f"❌ Failed to load platforms: {str(e)}")
         return
@@ -278,23 +347,187 @@ def _render_folder_management() -> None:
         st.divider()
         st.write("**Configured Folders:**")
 
+        # Create table header
+        header_cols = st.columns([4, 6, 1])
+        with header_cols[0]:
+            st.markdown("**Platform**")
+        with header_cols[1]:
+            st.markdown("**Folder Path**")
+        with header_cols[2]:
+            st.markdown("")
+
+        st.divider()
+
         for idx, config in enumerate(st.session_state.folder_configs):
             platform_id = config['platform_id']
             folder_path = config['folder_path']
             platform_name = platform_lookup.get(platform_id, f"Platform {platform_id}")
 
-            col1, col2, col3 = st.columns([3, 5, 1])
+            col1, col2, col3 = st.columns([4, 6, 1])
 
             with col1:
-                st.text(f"🎮 {platform_name}")
+                st.text(platform_name)
 
             with col2:
-                st.text(f"📂 {folder_path}")
+                st.text(folder_path)
 
             with col3:
                 if st.button("🗑️", key=f"delete_{idx}", help="Remove this folder"):
                     st.session_state.folder_configs.pop(idx)
                     st.rerun()
+
+
+def _render_template_builder() -> None:
+    """Render the rename template builder section"""
+    from game_renamer import TemplateFormatter, DEFAULT_RENAME_TEMPLATE
+
+    st.write("### 🎨 Rename Templates")
+    st.markdown("Customize how game folders are renamed for each platform")
+
+    with st.expander("ℹ️ How templates work", expanded=False):
+        st.markdown("""
+        **Templates** let you customize how game folders are renamed using special tokens.
+
+        **Available tokens:**
+        """)
+        for token, description in TemplateFormatter.AVAILABLE_TOKENS.items():
+            st.markdown(f"- `{token}` - {description}")
+
+        st.markdown("""
+        **Examples:**
+        - `{name} ({year})` → "The Witcher 3: Wild Hunt (2015)"
+        - `{name} [{platform}] ({year})` → "Mario Kart 8 [Switch] (2014)"
+        - `{name} ({year}) - {developer}` → "Cyberpunk 2077 (2020) - CD Projekt RED"
+        - `{name} ({year}) [{genres}]` → "Elden Ring (2022) [Role-playing, Adventure]"
+        """)
+
+    # Get current config
+    config = load_config()
+    templates = config.get('rename_templates', {})
+    default_template = templates.get('default', DEFAULT_RENAME_TEMPLATE)
+
+    # Default template section
+    st.write("#### Default Template")
+    st.markdown("This template is used when no platform-specific template is set")
+
+    col1, col2 = st.columns([3, 1])
+
+    with col1:
+        new_default = st.text_input(
+            "Default template",
+            value=default_template,
+            key="default_template_input",
+            label_visibility="collapsed",
+            placeholder="{name} ({year})"
+        )
+
+    with col2:
+        if st.button("💾 Save Default", key="save_default_template", use_container_width=True):
+            is_valid, error_msg = TemplateFormatter.validate_template(new_default)
+            if is_valid:
+                if save_default_template(new_default):
+                    st.success("✅ Default template saved!")
+                    st.rerun()
+            else:
+                st.error(f"❌ {error_msg}")
+
+    # Preview default template
+    if new_default:
+        preview = TemplateFormatter.get_preview(new_default)
+        st.markdown(f"**Preview:** `{preview}`")
+
+    # Token chips for easy insertion
+    st.write("**Click to add tokens:**")
+    token_cols = st.columns(5)
+    tokens = list(TemplateFormatter.AVAILABLE_TOKENS.keys())
+    for i, token in enumerate(tokens):
+        with token_cols[i % 5]:
+            if st.button(token, key=f"default_token_{i}", use_container_width=True):
+                # This would ideally insert at cursor, but Streamlit doesn't support that
+                # So we'll just show the token
+                st.info(f"Copy and paste: `{token}`")
+
+    st.divider()
+
+    # Platform-specific templates
+    st.write("#### Platform-Specific Templates")
+    st.markdown("Override the default template for specific platforms")
+
+    # Get configured folders to show platform-specific templates
+    folder_configs = st.session_state.get('folder_configs', [])
+
+    if not folder_configs:
+        st.info("👆 Configure platform folders above to set platform-specific templates")
+        return
+
+    # Get platform manager
+    platform_manager = st.session_state.get('platform_manager')
+    if not platform_manager:
+        return
+
+    try:
+        platforms = platform_manager.fetch_all_platforms()
+        platform_lookup = {p['id']: platform_manager.get_platform_display_name(p) for p in platforms}
+    except Exception as e:
+        st.error(f"❌ Failed to load platforms: {str(e)}")
+        return
+
+    # Get unique platform IDs from configured folders
+    configured_platform_ids = list(set(fc['platform_id'] for fc in folder_configs))
+    configured_platform_ids.sort(key=lambda pid: platform_lookup.get(pid, ""))
+
+    platform_templates = templates.get('platforms', {})
+
+    for platform_id in configured_platform_ids:
+        platform_name = platform_lookup.get(platform_id, f"Platform {platform_id}")
+        current_template = platform_templates.get(platform_id, default_template)
+
+        with st.container():
+            st.write(f"**{platform_name}**")
+
+            col1, col2 = st.columns([3, 1])
+
+            with col1:
+                new_template = st.text_input(
+                    f"Template for {platform_name}",
+                    value=current_template,
+                    key=f"template_{platform_id}",
+                    label_visibility="collapsed",
+                    placeholder=default_template
+                )
+
+            with col2:
+                if st.button("💾 Save", key=f"save_template_{platform_id}", use_container_width=True):
+                    is_valid, error_msg = TemplateFormatter.validate_template(new_template)
+                    if is_valid:
+                        if save_template_for_platform(platform_id, new_template):
+                            st.success(f"✅ Template saved for {platform_name}!")
+                            st.rerun()
+                    else:
+                        st.error(f"❌ {error_msg}")
+
+            # Preview
+            if new_template:
+                # Get platform abbreviation for preview
+                platform_data = next((p for p in platforms if p['id'] == platform_id), None)
+                platform_abbr = platform_data.get('abbreviation', '') if platform_data else ''
+
+                sample_data = {
+                    "name": "The Witcher 3: Wild Hunt",
+                    "year": "2015",
+                    "developers": ["CD Projekt RED"],
+                    "publishers": ["CD Projekt"],
+                    "genres": ["Role-playing", "Adventure"],
+                    "platforms": [platform_abbr] if platform_abbr else [],
+                    "rating": 9.2,
+                    "aggregated_rating": 9.3,
+                    "version_title": "Complete Edition"
+                }
+
+                preview = TemplateFormatter.format(new_template, sample_data, platform_abbr)
+                st.markdown(f"**Preview:** `{preview}`")
+
+            st.divider()
 
 
 def _render_save_section() -> None:
@@ -314,7 +547,6 @@ def _render_save_section() -> None:
 
             if save_config(config):
                 st.success("✅ Configuration saved successfully!")
-                st.info("💡 Go to **Scan & Process** to start renaming your games")
             else:
                 st.error("❌ Failed to save configuration")
 
@@ -354,6 +586,12 @@ def show() -> None:
     # Render folder management (only if connected)
     if st.session_state.get('igdb_client'):
         _render_folder_management()
+
+        st.divider()
+
+        # Render template builder
+        _render_template_builder()
+
         _render_save_section()
     else:
         st.info("👆 Connect to IGDB first to configure your game folders")

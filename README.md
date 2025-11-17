@@ -30,10 +30,11 @@ This tool is designed for organizing archived PC game collections (GOG downloads
 
 ### Web Interface
 The refactored version replaces the CLI with a Streamlit web app featuring:
-- Multi-page navigation (Home, Setup, Scan & Process, About)
-- Progress tracking sidebar
+- Multi-page navigation (Home, IGDB API, Platform Folders, Rename Templates, Scan & Process)
+- Progress tracking sidebar with connection status
 - Live statistics and result categorization
 - Session state persistence across page changes
+- Template builder with live previews
 
 ### Smart Matching
 - Intelligent name parsing removes common patterns (dots, underscores, release tags)
@@ -42,9 +43,10 @@ The refactored version replaces the CLI with a Streamlit web app featuring:
 - Remake/remaster detection using IGDB version data
 
 ### Configuration
-- YAML-based settings stored in `~/.game_renamer_config.yaml`
-- API credentials and folder path auto-load on startup
-- In-app configuration interface
+- YAML-based settings stored locally on your machine
+- API credentials, folder paths, and rename templates auto-load on startup
+- In-app configuration interface with live previews
+- Per-platform customizable rename templates
 
 ## Installation
 
@@ -110,14 +112,24 @@ You'll need free API credentials from Twitch:
 
 ### Initial Setup
 
-1. Launch the app (it opens in your browser automatically)
-2. Go to the Setup page in the sidebar
-3. Enter your Client ID and Client Secret
-4. Specify your games folder path
-5. Check "Save these settings" to persist your config
-6. Click "Connect to IGDB"
+1. **Launch the app** (it opens in your browser automatically at `http://localhost:8501`)
+2. **Configure IGDB API:**
+   - Go to the **IGDB API** page in the sidebar
+   - Enter your Client ID and Client Secret
+   - Click "Test Connection"
+   - Credentials are automatically saved locally
+3. **Add Platform Folders:**
+   - Go to the **Platform Folders** page
+   - Select a platform (PC, Switch, PS4, etc.)
+   - Enter the folder path containing your games
+   - Click "Add" (saves automatically)
+4. **Customize Templates (Optional):**
+   - Go to the **Rename Templates** page
+   - Set your default template (e.g., `{name} ({year})`)
+   - Optionally customize per-platform templates
+   - See live previews as you type
 
-Your settings are saved to `~/.game_renamer_config.yaml` and will auto-load next time.
+Your settings are saved to `.game_folder_renamer_config.yaml` in your home directory and will auto-load next time.
 
 ### Basic Workflow
 
@@ -199,17 +211,37 @@ For each folder:
 
 ## Configuration
 
-### Settings File
+### Settings File Location
 
-Configuration is stored in `~/.game_renamer_config.yaml`:
+All settings are automatically saved to a local configuration file:
 
+**Location:**
+- **Windows:** `C:\Users\YourUsername\.game_folder_renamer_config.yaml`
+- **Linux/Mac:** `~/.game_folder_renamer_config.yaml`
+
+**What's stored:**
 ```yaml
 client_id: your_client_id_here
 client_secret: your_client_secret_here
-games_folder: /path/to/your/games
+folder_configs:
+  - platform_id: 6
+    folder_path: C:\Games\PC
+  - platform_id: 130
+    folder_path: C:\Games\Switch
+rename_templates:
+  default: "{name} ({year})"
+  platforms:
+    6: "{name} ({year})"           # PC
+    130: "{name} [{platform}] ({year})"  # Switch
 ```
 
-You can edit this file directly or use the Setup page.
+**Privacy & Security:**
+- Configuration is stored **locally only** - never sent anywhere
+- No data collection or external storage
+- Your API credentials stay on your machine
+- Safe to version control (add `.game_folder_renamer_config.yaml` to `.gitignore` for privacy)
+
+You can edit this file directly or use the app's configuration pages.
 
 ### Streamlit Customization
 

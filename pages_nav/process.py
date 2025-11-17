@@ -279,14 +279,38 @@ def _render_single_match_item(folder_name: str, result: Dict[str, Any]) -> None:
         folder_name: Original folder name
         result: Result dictionary containing game data
     """
+    from pages_nav.setup import get_template_for_platform
+
     game = result['game']
-    new_name = format_game_name(game)
+
+    # Get template for current platform
+    platform_id = st.session_state.get('current_platform_id', 6)
+    template = get_template_for_platform(platform_id)
+
+    # Get platform abbreviation
+    platform_manager = st.session_state.get('platform_manager')
+    platform_abbr = ""
+    if platform_manager:
+        try:
+            platforms = platform_manager.fetch_all_platforms()
+            platform = next((p for p in platforms if p['id'] == platform_id), None)
+            if platform:
+                platform_abbr = platform.get('abbreviation', '')
+        except:
+            pass
+
+    new_name = format_game_name(game, template, platform_abbr)
     remake_badge = get_remake_badge(game)
 
     with st.expander(f"📁 {folder_name} → {new_name}{remake_badge}"):
         st.write(f"**Original:** {folder_name}")
         st.write(f"**New Name:** {new_name}")
         st.write(f"**Year:** {game['year']}")
+
+        if game.get('developers'):
+            st.write(f"**Developer:** {', '.join(game['developers'])}")
+        if game.get('genres'):
+            st.write(f"**Genres:** {', '.join(game['genres'])}")
 
         if game['is_remake']:
             st.info("This is a remake or remaster")
@@ -341,6 +365,24 @@ def _render_multiple_match_item(folder_name: str, result: Dict[str, Any]) -> Non
         folder_name: Original folder name
         result: Result dictionary containing multiple games
     """
+    from pages_nav.setup import get_template_for_platform
+
+    # Get template for current platform
+    platform_id = st.session_state.get('current_platform_id', 6)
+    template = get_template_for_platform(platform_id)
+
+    # Get platform abbreviation
+    platform_manager = st.session_state.get('platform_manager')
+    platform_abbr = ""
+    if platform_manager:
+        try:
+            platforms = platform_manager.fetch_all_platforms()
+            platform = next((p for p in platforms if p['id'] == platform_id), None)
+            if platform:
+                platform_abbr = platform.get('abbreviation', '')
+        except:
+            pass
+
     with st.expander(f"📁 {folder_name}"):
         st.write(f"**Original Folder:** {folder_name}")
         st.write(f"**Search Query:** {result['query']}")
@@ -359,7 +401,7 @@ def _render_multiple_match_item(folder_name: str, result: Dict[str, Any]) -> Non
         col_btn1, col_btn2 = st.columns([1, 5])
         with col_btn1:
             if st.button("✅ Apply", key=f"apply_{folder_name}"):
-                _handle_apply_selection(folder_name, selected, options, games, result)
+                _handle_apply_selection(folder_name, selected, options, games, result, template, platform_abbr)
 
 
 def _handle_apply_selection(
@@ -367,7 +409,9 @@ def _handle_apply_selection(
     selected: str,
     options: List[str],
     games: List[Dict[str, Any]],
-    result: Dict[str, Any]
+    result: Dict[str, Any],
+    template: str,
+    platform_abbreviation: str
 ) -> None:
     """Handle applying a user's game selection
 
@@ -377,6 +421,8 @@ def _handle_apply_selection(
         options: List of all option strings
         games: List of game dictionaries
         result: Result dictionary to update
+        template: Template string to use for formatting
+        platform_abbreviation: Platform abbreviation for template
     """
     if selected == "❌ Skip this folder":
         st.info("Skipped")
@@ -384,7 +430,7 @@ def _handle_apply_selection(
         selected_idx = options.index(selected)
         if selected_idx < len(games):
             selected_game = games[selected_idx]
-            new_name = format_game_name(selected_game)
+            new_name = format_game_name(selected_game, template, platform_abbreviation)
             dry_run = st.session_state.get('dry_run', False)
             action = "Simulating rename" if dry_run else "Renaming"
 

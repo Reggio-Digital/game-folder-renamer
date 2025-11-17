@@ -31,7 +31,7 @@ def show():
         2. Create a free account if needed
         3. Register a new application
         4. Copy your Client ID and Client Secret
-        5. Click the **Setup** page in the sidebar to configure
+        5. Click the **IGDB API** page in the sidebar to configure
         """)
 
     elif not has_folders:
@@ -114,7 +114,8 @@ def show():
         #### What you can do now:
         - Review and rename matched folders in **Scan & Process**
         - Scan again to pick up any new folders
-        - Reconfigure settings in **Setup** if needed
+        - Customize rename templates in **Rename Templates**
+        - Add more platform folders in **Platform Folders**
         """)
 
     st.divider()
@@ -150,5 +151,5 @@ def show():
         - API credentials stored locally on your machine
         - No data sent to third parties except IGDB
         - Only renames folders, doesn't modify game files
-        - Settings saved in `~/.game_renamer_config.yaml`
+        - Settings saved in `~/.game_folder_renamer_config.yaml`
         """)
