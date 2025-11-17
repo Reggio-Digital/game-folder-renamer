@@ -17,17 +17,28 @@ fi
 PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
 echo "✓ Python $PYTHON_VERSION found"
 
-# Check if pip is installed
-if ! command -v pip3 &> /dev/null; then
-    echo "❌ Error: pip is not installed"
-    echo "Please install pip"
-    exit 1
+# Virtual environment directory
+VENV_DIR="venv"
+
+# Check if virtual environment exists
+if [ ! -d "$VENV_DIR" ]; then
+    echo "📦 Creating virtual environment..."
+    python3 -m venv "$VENV_DIR"
+    if [ $? -ne 0 ]; then
+        echo "❌ Error: Failed to create virtual environment"
+        echo "   Please ensure python3-venv is installed: sudo apt install python3-venv"
+        exit 1
+    fi
+    echo "✓ Virtual environment created"
 fi
 
-# Check if streamlit is installed
-if ! python3 -c "import streamlit" &> /dev/null; then
-    echo "📦 Streamlit not found. Installing dependencies..."
-    pip3 install -r requirements.txt
+# Activate virtual environment
+source "$VENV_DIR/bin/activate"
+
+# Check if streamlit is installed in the virtual environment
+if ! python -c "import streamlit" &> /dev/null; then
+    echo "📦 Installing dependencies in virtual environment..."
+    pip install -r requirements.txt
     if [ $? -ne 0 ]; then
         echo "❌ Error: Failed to install dependencies"
         exit 1

@@ -31,10 +31,10 @@ if 'dry_run' not in st.session_state:
 
 # Define pages for navigation
 pages = [
-    st.Page(home.show, title="Home", icon="🏠", default=True),
-    st.Page(setup.show, title="Setup", icon="🔑"),
-    st.Page(process.show, title="Scan & Process", icon="🎮"),
-    st.Page(about.show, title="About", icon="ℹ️"),
+    st.Page(home.show, title="Home", icon="🏠", url_path="home", default=True),
+    st.Page(setup.show, title="Setup", icon="🔑", url_path="setup"),
+    st.Page(process.show, title="Scan & Process", icon="🎮", url_path="process"),
+    st.Page(about.show, title="About", icon="ℹ️", url_path="about"),
 ]
 
 # Create navigation
