@@ -26,6 +26,8 @@ if 'client_id' not in st.session_state:
     st.session_state.client_id = None
 if 'client_secret' not in st.session_state:
     st.session_state.client_secret = None
+if 'dry_run' not in st.session_state:
+    st.session_state.dry_run = False
 
 # Define pages for navigation
 pages = [

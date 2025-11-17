@@ -278,12 +278,13 @@ class GameFolderRenamer:
 
         return folders
 
-    def rename_folder(self, old_name: str, new_name: str) -> Dict[str, Any]:
+    def rename_folder(self, old_name: str, new_name: str, dry_run: bool = False) -> Dict[str, Any]:
         """Rename a single folder
 
         Args:
             old_name: Current folder name
             new_name: Desired folder name
+            dry_run: If True, only simulate the rename without actually performing it
 
         Returns:
             Dictionary with success status and details
@@ -296,11 +297,21 @@ class GameFolderRenamer:
             return {
                 'success': False,
                 'error': f'Folder "{new_name}" already exists',
-                'old_name': old_name
+                'old_name': old_name,
+                'dry_run': dry_run
+            }
+
+        if dry_run:
+            # Dry run mode - just simulate the rename
+            return {
+                'success': True,
+                'old_name': old_name,
+                'new_name': new_name,
+                'dry_run': True
             }
 
         try:
             os.rename(old_path, new_path)
-            return {'success': True, 'old_name': old_name, 'new_name': new_name}
+            return {'success': True, 'old_name': old_name, 'new_name': new_name, 'dry_run': False}
         except OSError as e:
-            return {'success': False, 'error': str(e), 'old_name': old_name}
+            return {'success': False, 'error': str(e), 'old_name': old_name, 'dry_run': False}
