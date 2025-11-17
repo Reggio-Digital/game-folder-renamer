@@ -358,8 +358,6 @@ MIT License - See LICENSE file for details.
 - Built with [Streamlit](https://streamlit.io/)
 - Authentication via [Twitch Developer API](https://dev.twitch.tv/)
 
-## Links
+---
 
-- [GitHub Issues](https://github.com/Reggio-Digital/game-folder-renamer/issues)
-- [IGDB API Documentation](https://api-docs.igdb.com/)
-- [Streamlit Documentation](https://docs.streamlit.io/)
+Made with ❤️ for game collectors and digital archivists
