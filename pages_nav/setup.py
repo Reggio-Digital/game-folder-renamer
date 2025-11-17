@@ -2,8 +2,9 @@ import streamlit as st
 import os
 import yaml
 from pathlib import Path
-from typing import Dict, Any, Optional
-from game_renamer import IGDBClient, GameFolderRenamer
+from typing import Dict, Any, Optional, List
+from game_renamer import IGDBClient
+from platforms import PlatformManager
 
 # Configuration file management
 CONFIG_FILE = Path.home() / '.game_renamer_config.yaml'
@@ -72,72 +73,11 @@ def get_authenticated_igdb_client(client_id: str, client_secret: str) -> IGDBCli
     return client
 
 
-def _validate_credentials(client_id: str, client_secret: str, games_folder: str) -> Optional[str]:
-    """Validate user input credentials and folder path
+def _render_credentials_section(saved_config: Dict[str, Any]) -> None:
+    """Render API credentials section"""
+    st.write("### 🔐 API Credentials")
 
-    Args:
-        client_id: IGDB client ID
-        client_secret: IGDB client secret
-        games_folder: Path to games folder
-
-    Returns:
-        Error message if validation fails, None otherwise
-    """
-    if not client_id or not client_secret:
-        return "Please provide both Client ID and Client Secret"
-
-    if not games_folder:
-        return "Please provide a games folder path"
-
-    # Expand user path if needed
-    expanded_path = os.path.expanduser(games_folder)
-
-    if not os.path.exists(expanded_path):
-        return f"Games folder does not exist: {expanded_path}"
-
-    if not os.path.isdir(expanded_path):
-        return f"Path is not a directory: {expanded_path}"
-
-    # Check if we have read permissions
-    if not os.access(expanded_path, os.R_OK):
-        return f"No read permission for folder: {expanded_path}"
-
-    return None
-
-
-def _render_disconnect_section() -> None:
-    """Render the disconnect and reconfigure section when already connected"""
-    st.success("✅ Connected to IGDB")
-
-    if st.session_state.get('renamer'):
-        st.info(f"📁 Current folder: {st.session_state.renamer.base_path}")
-
-    st.divider()
-
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("🔌 Disconnect and Reconfigure", use_container_width=True, type="secondary"):
-            _handle_disconnect()
-
-    st.divider()
-    st.success("🎉 **You're all set!**")
-    st.info("👉 Go to **Home** to see your next steps, or jump straight to **Scan & Process** to start renaming!")
-
-
-def _handle_disconnect() -> None:
-    """Handle disconnecting and clearing session state"""
-    st.session_state.igdb_client = None
-    st.session_state.renamer = None
-    st.session_state.client_id = None
-    st.session_state.client_secret = None
-    st.session_state.folders = []
-    st.session_state.processing_results = {}
-    st.rerun()
-
-
-def _render_setup_instructions() -> None:
-    """Render the API credentials setup instructions"""
-    with st.expander("ℹ️ How to get free API credentials (2 minutes)", expanded=False):
+    with st.expander("ℹ️ How to get free API credentials", expanded=False):
         st.markdown("""
         **Quick guide to get your free IGDB credentials:**
 
@@ -155,133 +95,265 @@ def _render_setup_instructions() -> None:
         That's it! The credentials are free and work forever.
         """)
 
+    col1, col2 = st.columns(2)
 
-def _render_setup_form(saved_config: Dict[str, Any]) -> None:
-    """Render the setup form for credentials and folder path
-
-    Args:
-        saved_config: Previously saved configuration
-    """
-    default_client_id = saved_config.get('client_id', '')
-    default_client_secret = saved_config.get('client_secret', '')
-    default_games_folder = saved_config.get('games_folder', os.path.expanduser('~'))
-
-    with st.form("setup_form"):
-        st.write("### 🔐 API Credentials")
-
+    with col1:
         client_id = st.text_input(
             "Client ID",
-            value=default_client_id,
+            value=saved_config.get('client_id', ''),
             type="password",
-            placeholder="Paste your Client ID here"
+            placeholder="Paste your Client ID here",
+            key="input_client_id"
         )
 
+    with col2:
         client_secret = st.text_input(
             "Client Secret",
-            value=default_client_secret,
+            value=saved_config.get('client_secret', ''),
             type="password",
-            placeholder="Paste your Client Secret here"
+            placeholder="Paste your Client Secret here",
+            key="input_client_secret"
         )
 
-        st.write("### 📁 Games Folder")
+    # Test connection button
+    if client_id and client_secret:
+        if st.button("🔌 Test Connection"):
+            try:
+                with st.spinner("🔄 Authenticating with IGDB..."):
+                    igdb_client = get_authenticated_igdb_client(client_id, client_secret)
+                    st.session_state.igdb_client = igdb_client
+                    st.session_state.client_id = client_id
+                    st.session_state.client_secret = client_secret
+                    st.session_state.igdb_connection_failed = False  # Clear failed flag
 
-        games_folder = st.text_input(
-            "Folder Path",
-            value=default_games_folder,
-            placeholder="e.g., /home/user/games or C:\\Games",
-            help="The folder that contains all your game folders"
-        )
+                    # Create platform manager
+                    st.session_state.platform_manager = PlatformManager(client_id, igdb_client.access_token)
 
-        save_settings = st.checkbox(
-            "Save these settings for next time",
-            value=True,
-            help="Settings will be saved to ~/.game_renamer_config.yaml"
-        )
-
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            submitted = st.form_submit_button("🔌 Connect to IGDB", use_container_width=True, type="primary")
-
-    if submitted:
-        _handle_form_submission(client_id, client_secret, games_folder, save_settings)
+                with st.spinner("🎮 Loading platforms from IGDB..."):
+                    # Pre-fetch platforms to cache them
+                    platforms = st.session_state.platform_manager.fetch_all_platforms()
+                    st.success(f"✅ Connected successfully! Loaded {len(platforms)} platforms")
+                    st.rerun()
+            except Exception as e:
+                st.session_state.igdb_connection_failed = True  # Set failed flag
+                st.error(f"❌ Authentication failed: {str(e)}")
+    else:
+        st.info("👆 Enter your credentials above and click 'Test Connection'")
 
 
-def _handle_form_submission(
-    client_id: str,
-    client_secret: str,
-    games_folder: str,
-    save_settings: bool
-) -> None:
-    """Handle the setup form submission
+def _render_folder_management() -> None:
+    """Render the folder management section"""
+    st.write("### 📁 Platform Folders")
+    st.markdown("Configure which folders contain games for each platform")
 
-    Args:
-        client_id: IGDB client ID
-        client_secret: IGDB client secret
-        games_folder: Path to games folder
-        save_settings: Whether to save settings to config file
-    """
-    # Expand user path
-    expanded_folder = os.path.expanduser(games_folder)
+    # Initialize folder_configs in session state if not exists
+    if 'folder_configs' not in st.session_state:
+        # Load from saved config
+        saved_config = load_config()
+        st.session_state.folder_configs = saved_config.get('folder_configs', [])
 
-    # Validate inputs
-    error = _validate_credentials(client_id, client_secret, expanded_folder)
-    if error:
-        st.error(f"❌ {error}")
+    # Get platform choices
+    platform_manager = st.session_state.get('platform_manager')
+    if not platform_manager:
+        st.warning("⚠️ Please connect to IGDB first")
         return
 
     try:
-        with st.spinner("🔄 Authenticating with IGDB..."):
-            # Use cached authentication
-            igdb_client = get_authenticated_igdb_client(client_id, client_secret)
+        platforms = platform_manager.fetch_all_platforms()
 
-            # Store in session state
-            st.session_state.igdb_client = igdb_client
-            st.session_state.renamer = GameFolderRenamer(igdb_client, expanded_folder)
-            st.session_state.client_id = client_id
-            st.session_state.client_secret = client_secret
+        # Define popular platform IDs
+        popular_platform_ids = [
+            6,    # PC (Microsoft Windows)
+            48,   # PlayStation 4
+            49,   # Xbox One
+            130,  # Nintendo Switch
+            167,  # PlayStation 5
+            169,  # Xbox Series X|S
+            9,    # PlayStation 3
+            12,   # Xbox 360
+            41,   # Wii U
+            5,    # Wii
+            7,    # PlayStation
+            8,    # PlayStation 2
+        ]
 
-            # Save settings if requested
-            if save_settings:
-                config = {
-                    'client_id': client_id,
-                    'client_secret': client_secret,
-                    'games_folder': expanded_folder
-                }
-                if save_config(config):
-                    st.success("✅ Settings saved successfully")
+        # Separate popular and other platforms
+        popular_platforms = []
+        other_platforms = []
 
-        st.success("✅ Connected successfully!")
-        st.info("💡 Use the sidebar to navigate to 'Scan & Process' to start renaming your game folders.")
-        st.rerun()
+        for p in platforms:
+            display_name = platform_manager.get_platform_display_name(p)
+            if p['id'] in popular_platform_ids:
+                popular_platforms.append((p['id'], display_name))
+            else:
+                other_platforms.append((p['id'], display_name))
 
+        # Sort popular platforms by the order in popular_platform_ids
+        popular_platforms.sort(key=lambda x: popular_platform_ids.index(x[0]) if x[0] in popular_platform_ids else 999)
+
+        # Sort other platforms alphabetically
+        other_platforms.sort(key=lambda x: x[1])
+
+        # Combine with separator
+        platform_options = popular_platforms + [(-1, "────────────────────")] + other_platforms
+        platform_lookup = {p['id']: platform_manager.get_platform_display_name(p) for p in platforms}
     except Exception as e:
-        st.error(f"❌ Authentication failed: {str(e)}")
-        st.info("💡 Please check your credentials and try again. Make sure there are no extra spaces.")
+        st.error(f"❌ Failed to load platforms: {str(e)}")
+        return
 
-        # Additional troubleshooting hints
-        with st.expander("🔍 Troubleshooting tips"):
-            st.markdown("""
-            - Verify your Client ID and Client Secret are correct
-            - Make sure you copied the entire credential without extra spaces
-            - Check your internet connection
-            - Try regenerating credentials in the Twitch Developer Console
-            - Ensure the credentials are for the same application
-            """)
+    # Combined section for managing folders
+    # Header row for labels
+    col1, col2, col3 = st.columns([3, 5, 1])
+    with col1:
+        st.markdown("**Platform**")
+    with col2:
+        st.markdown("**Folder Path**")
+    with col3:
+        st.markdown("**Action**")
+
+    # Use form to ensure consistent alignment
+    with st.form("add_folder_form", clear_on_submit=False):
+        col1, col2, col3 = st.columns([3, 5, 1])
+
+        with col1:
+            # Platform dropdown
+            platform_names = [name for _, name in platform_options]
+            selected_platform_name = st.selectbox(
+                "Platform",
+                platform_names,
+                key="new_platform_select_form",
+                placeholder="Select Platform",
+                label_visibility="collapsed"
+            )
+
+            # Get selected platform ID (skip separator)
+            selected_platform_id = next((pid for pid, name in platform_options if name == selected_platform_name and pid != -1), None)
+
+        with col2:
+            # Folder path input
+            new_folder = st.text_input(
+                "Folder Path",
+                placeholder="C:\\Games or /home/user/games",
+                key="new_folder_input_form",
+                label_visibility="collapsed"
+            )
+
+        with col3:
+            submitted = st.form_submit_button("Add", use_container_width=True, type="primary")
+
+    # Handle form submission outside the form
+    if submitted:
+        # Check if separator was selected
+        if selected_platform_id is None or selected_platform_id == -1:
+            st.error("❌ Please select a valid platform")
+        elif new_folder:
+            expanded_path = os.path.expanduser(new_folder)
+
+            # Validate path
+            if not os.path.exists(expanded_path):
+                st.error(f"❌ Folder does not exist: {expanded_path}")
+            elif not os.path.isdir(expanded_path):
+                st.error(f"❌ Path is not a directory: {expanded_path}")
+            elif not os.access(expanded_path, os.R_OK):
+                st.error(f"❌ No read permission for folder: {expanded_path}")
+            else:
+                # Add to folder configs
+                new_config = {
+                    'platform_id': selected_platform_id,
+                    'folder_path': expanded_path
+                }
+
+                # Check for duplicates
+                if new_config not in st.session_state.folder_configs:
+                    st.session_state.folder_configs.append(new_config)
+                    st.success(f"✅ Added {platform_lookup[selected_platform_id]} folder")
+                    st.rerun()
+                else:
+                    st.warning("⚠️ This folder is already configured")
+        else:
+            st.error("❌ Please enter a folder path")
+
+    # Display existing folder configurations below the form
+    if st.session_state.folder_configs:
+        st.divider()
+        st.write("**Configured Folders:**")
+
+        for idx, config in enumerate(st.session_state.folder_configs):
+            platform_id = config['platform_id']
+            folder_path = config['folder_path']
+            platform_name = platform_lookup.get(platform_id, f"Platform {platform_id}")
+
+            col1, col2, col3 = st.columns([3, 5, 1])
+
+            with col1:
+                st.text(f"🎮 {platform_name}")
+
+            with col2:
+                st.text(f"📂 {folder_path}")
+
+            with col3:
+                if st.button("🗑️", key=f"delete_{idx}", help="Remove this folder"):
+                    st.session_state.folder_configs.pop(idx)
+                    st.rerun()
+
+
+def _render_save_section() -> None:
+    """Render the save configuration section"""
+    st.divider()
+
+    col1, col2, col3 = st.columns([1, 2, 1])
+
+    with col2:
+        if st.button("💾 Save Configuration", use_container_width=True, type="primary"):
+            # Prepare config to save
+            config = {
+                'client_id': st.session_state.get('client_id', ''),
+                'client_secret': st.session_state.get('client_secret', ''),
+                'folder_configs': st.session_state.get('folder_configs', [])
+            }
+
+            if save_config(config):
+                st.success("✅ Configuration saved successfully!")
+                st.info("💡 Go to **Scan & Process** to start renaming your games")
+            else:
+                st.error("❌ Failed to save configuration")
 
 
 def show() -> None:
     """Display the Setup/Configuration page"""
     st.title("🔑 Setup")
-    st.markdown("Get started by connecting to IGDB and selecting your games folder")
+    st.markdown("Configure your IGDB credentials and game folder locations")
 
     # Load saved configuration
     saved_config = load_config()
 
-    # Check if already connected
+    # Auto-load credentials if available
+    if saved_config.get('client_id') and saved_config.get('client_secret') and not st.session_state.get('igdb_client'):
+        try:
+            igdb_client = get_authenticated_igdb_client(saved_config['client_id'], saved_config['client_secret'])
+            st.session_state.igdb_client = igdb_client
+            st.session_state.client_id = saved_config['client_id']
+            st.session_state.client_secret = saved_config['client_secret']
+            st.session_state.platform_manager = PlatformManager(saved_config['client_id'], igdb_client.access_token)
+
+            # Pre-fetch and cache platforms
+            try:
+                st.session_state.platform_manager.fetch_all_platforms()
+            except:
+                pass  # Silently continue if platform fetch fails during auto-load
+        except:
+            pass  # Silently continue - will reconnect when needed
+
+    st.divider()
+
+    # Render credentials section
+    _render_credentials_section(saved_config)
+
+    st.divider()
+
+    # Render folder management (only if connected)
     if st.session_state.get('igdb_client'):
-        _render_disconnect_section()
+        _render_folder_management()
+        _render_save_section()
     else:
-        st.divider()
-        _render_setup_instructions()
-        st.divider()
-        _render_setup_form(saved_config)
+        st.info("👆 Connect to IGDB first to configure your game folders")

@@ -7,6 +7,8 @@
 A web-based tool for automatically renaming PC game folders using the IGDB database. Transforms messy folder names like `Dead.Space.v1.2-RUNE` into clean, organized names like `Dead Space (2008)`.
 
 > **Note:** This project has been completely refactored from the original CLI version. It now features a web interface built with Streamlit and a modular architecture. Same purpose, much better implementation.
+>
+> **Development Status:** This project is currently in active development and may see frequent changes. While the tool is functional, it's not yet 100% stable. We're working toward a v1.0 release that will provide a stable version for users while development continues. For now, expect updates and potential breaking changes as we improve the codebase.
 
 ## Overview
 

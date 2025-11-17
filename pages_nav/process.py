@@ -1,24 +1,27 @@
 import streamlit as st
-from typing import Dict, List, Tuple, Any
+import os
+from typing import Dict, List, Tuple, Any, Optional
 from utils import format_game_name, format_game_option, get_remake_badge
+from game_renamer import GameFolderRenamer
 
 
 # Cached function for game searches
 @st.cache_data(ttl=None)  # ttl=None means cache forever
-def search_game_cached(client_id: str, client_secret: str, game_name: str) -> Dict[str, Any]:
+def search_game_cached(client_id: str, client_secret: str, game_name: str, platform_id: int) -> Dict[str, Any]:
     """Search for a game with forever caching
 
     Args:
         client_id: IGDB client ID
         client_secret: IGDB client secret
         game_name: Name of the game to search for
+        platform_id: Platform ID to filter by
 
     Returns:
         Search result dictionary from IGDB
     """
     from pages_nav.setup import get_authenticated_igdb_client
     client = get_authenticated_igdb_client(client_id, client_secret)
-    return client.search_game(game_name)
+    return client.search_game(game_name, platform_id)
 
 
 def _check_connection() -> bool:
@@ -30,12 +33,91 @@ def _check_connection() -> bool:
     if not st.session_state.get('igdb_client'):
         st.warning("⚠️ You need to connect to IGDB first")
         st.info("👉 Go to the **Setup** page to configure your credentials")
-
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.markdown("**New user?** Go to **Home** to see the getting started guide")
         return False
     return True
+
+
+def _render_folder_selector() -> Optional[Tuple[int, str, str]]:
+    """Render folder selector from configured folders
+
+    Returns:
+        Tuple of (platform_id, folder_path, display_name) or None
+    """
+    folder_configs = st.session_state.get('folder_configs', [])
+
+    if not folder_configs:
+        st.warning("⚠️ No game folders configured")
+        st.info("👉 Go to the **Setup** page to add your game folders")
+        return None
+
+    # Get platform manager for display names
+    platform_manager = st.session_state.get('platform_manager')
+    if not platform_manager:
+        st.error("⚠️ Platform manager not initialized")
+        return None
+
+    # Build display options
+    display_options = []
+    for config in folder_configs:
+        platform_id = config['platform_id']
+        folder_path = config['folder_path']
+
+        # Get platform info
+        try:
+            platforms = platform_manager.fetch_all_platforms()
+            platform = next((p for p in platforms if p['id'] == platform_id), None)
+            if platform:
+                platform_name = platform_manager.get_platform_display_name(platform)
+            else:
+                platform_name = f"Platform {platform_id}"
+        except:
+            platform_name = f"Platform {platform_id}"
+
+        folder_name = os.path.basename(folder_path)
+        display = f"{platform_name} - {folder_name}"
+        display_options.append((platform_id, folder_path, display, platform_name))
+
+    # Current selection
+    current_idx = 0
+    if 'current_folder_config_idx' in st.session_state:
+        current_idx = st.session_state.current_folder_config_idx
+        if current_idx >= len(display_options):
+            current_idx = 0
+
+    # Render selector
+    st.write("### 🎮 Select Folder to Process")
+
+    selected_display = st.selectbox(
+        "Folder",
+        [opt[2] for opt in display_options],
+        index=current_idx,
+        help="Select which folder's games to process"
+    )
+
+    # Get selected config
+    selected_idx = [opt[2] for opt in display_options].index(selected_display)
+    platform_id, folder_path, display, platform_name = display_options[selected_idx]
+
+    # Update renamer if folder changed
+    if st.session_state.get('current_folder_config_idx') != selected_idx:
+        st.session_state.renamer = GameFolderRenamer(
+            st.session_state.igdb_client,
+            folder_path,
+            platform_id
+        )
+        st.session_state.current_folder_config_idx = selected_idx
+        st.session_state.current_platform_id = platform_id
+        st.session_state.current_platform_name = platform_name
+        st.session_state.current_folder_path = folder_path
+
+        # Clear previous results when switching folders
+        st.session_state.folders = []
+        st.session_state.processing_results = {}
+
+    st.info(f"📁 Processing: **{platform_name}** from `{folder_path}`")
+    st.divider()
+
+    return (platform_id, folder_path, platform_name)
 
 
 def _render_action_buttons() -> None:
@@ -132,12 +214,23 @@ def _process_folders() -> None:
         status_text.text(f"Processing {idx + 1}/{total}: {folder_name}")
         progress_bar.progress((idx + 1) / total)
 
+        # Get current platform ID
+        platform_id = st.session_state.get('current_platform_id', 6)
+
         # Search for game using cached function
-        result = search_game_cached(
-            st.session_state.client_id,
-            st.session_state.client_secret,
-            folder_name
-        )
+        try:
+            result = search_game_cached(
+                st.session_state.client_id,
+                st.session_state.client_secret,
+                folder_name,
+                platform_id
+            )
+        except Exception as e:
+            # Mark connection as failed if API call fails
+            st.session_state.igdb_connection_failed = True
+            st.error(f"❌ IGDB connection failed: {str(e)}")
+            st.info("👉 Go to **Setup** page and click 'Test Connection' to reconnect")
+            return
 
         if 'processing_results' not in st.session_state:
             st.session_state.processing_results = {}
@@ -365,7 +458,7 @@ def _render_results() -> None:
 
     # Create tabs for different result types
     tab1, tab2, tab3, tab4 = st.tabs([
-        f"✅ Auto-Renamed ({len(single_matches)})",
+        f"✅ Auto-Matched ({len(single_matches)})",
         f"🤔 Needs Selection ({len(multiple_matches)})",
         f"❌ Not Found ({len(not_found)})",
         f"⚠️ Errors ({len(errors)})"
@@ -405,6 +498,18 @@ def show() -> None:
 
     # Check if connected
     if not _check_connection():
+        st.stop()
+
+    # Render folder selector
+    folder_info = _render_folder_selector()
+
+    # Check if we have a valid folder selected
+    if not folder_info:
+        st.stop()
+
+    # Check if we have a renamer instance
+    if not st.session_state.get('renamer'):
+        st.error("⚠️ Renamer not initialized. Please select a folder.")
         st.stop()
 
     # Render main UI components

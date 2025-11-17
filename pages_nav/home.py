@@ -3,7 +3,11 @@ import streamlit as st
 def show():
     """Display the Home/Dashboard page with getting started guide"""
     st.title("🎮 Game Folder Renamer")
-    st.markdown("Automatically rename your game folders with IGDB data")
+    st.markdown("""
+    **Game Folder Renamer** automatically renames your game folders using data from the IGDB
+    (Internet Game Database). It helps you organize your game collection with consistent,
+    properly formatted folder names.
+    """)
 
     st.divider()
 
@@ -22,17 +26,13 @@ def show():
         - Free IGDB API credentials from Twitch Developer Console
         - Path to your games folder
 
-        #### Quick setup (takes ~2 minutes):
+        #### Quick setup:
         1. Visit [Twitch Developer Console](https://dev.twitch.tv/console/apps)
         2. Create a free account if needed
         3. Register a new application
         4. Copy your Client ID and Client Secret
         5. Click the **Setup** page in the sidebar to configure
         """)
-
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.markdown("👈 **Click 'Setup' in the sidebar to begin**")
 
     elif not has_folders:
         # Step 2: Connected but no folders scanned
@@ -50,10 +50,6 @@ def show():
         - It will identify which folders are already properly named
         - You'll see how many folders need renaming
         """)
-
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.markdown("👈 **Click 'Scan & Process' in the sidebar**")
 
     elif not has_results:
         # Step 3: Folders scanned but not processed
@@ -81,10 +77,6 @@ def show():
         - Suggests the proper folder name format
         - Lets you review before renaming
         """)
-
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.markdown("👈 **Go to 'Scan & Process' to continue**")
 
     else:
         # Step 4: All done - show results
@@ -127,26 +119,36 @@ def show():
 
     st.divider()
 
-    # Quick tips section
-    with st.expander("💡 Tips for Best Results"):
+    # Example transformations
+    st.markdown("### 📝 Example Transformations")
+    st.markdown("""
+    | Original Folder Name | Renamed To |
+    |---------------------|------------|
+    | `The.Witcher.3-CODEX` | `The Witcher 3: Wild Hunt (2015)` |
+    | `Cyberpunk.2077.v1.5` | `Cyberpunk 2077 (2020)` |
+    | `HalfLife2` | `Half-Life 2 (2004)` |
+    | `GTA.V-RELOADED` | `Grand Theft Auto V (2015)` |
+    """)
+
+    st.divider()
+
+    # Quick reference
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("### 💡 Tips")
         st.markdown("""
-        - **Folder names**: The app handles various formats (dots, underscores, version numbers)
-        - **Already named**: Folders matching `Game Name (Year)` format are automatically skipped
-        - **Multiple matches**: When multiple games are found, you can choose the correct one
-        - **Not found**: Some indie or very new games might not be in IGDB yet
-        - **Cached results**: Search results are cached for faster repeated operations
+        - Handles various formats (dots, underscores, version numbers)
+        - Automatically skips folders already in `Game Name (Year)` format
+        - Multiple matches let you choose the correct game
+        - Search results are cached for faster operations
         """)
 
-    # Show example transformations
-    with st.expander("📝 Example Transformations"):
+    with col2:
+        st.markdown("### 🔒 Privacy")
         st.markdown("""
-        Here's how the app renames folders:
-
-        | Original Folder Name | Renamed To |
-        |---------------------|------------|
-        | `The.Witcher.3-CODEX` | `The Witcher 3: Wild Hunt (2015)` |
-        | `Cyberpunk.2077.v1.5` | `Cyberpunk 2077 (2020)` |
-        | `HalfLife2` | `Half-Life 2 (2004)` |
-        | `Portal.2.Enhanced.Edition` | `Portal 2 (2011)` |
-        | `GTA.V-RELOADED` | `Grand Theft Auto V (2015)` |
+        - API credentials stored locally on your machine
+        - No data sent to third parties except IGDB
+        - Only renames folders, doesn't modify game files
+        - Settings saved in `~/.game_renamer_config.yaml`
         """)

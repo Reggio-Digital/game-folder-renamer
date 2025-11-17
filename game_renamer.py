@@ -8,9 +8,9 @@ import time
 # IGDB API Constants
 TWITCH_AUTH_URL = "https://id.twitch.tv/oauth2/token"
 IGDB_GAMES_ENDPOINT = "https://api.igdb.com/v4/games"
-IGDB_PC_PLATFORM_ID = 6
 IGDB_MAIN_GAME_CATEGORY = 0
 IGDB_SEARCH_LIMIT = 15
+IGDB_DEFAULT_PLATFORM_ID = 6  # PC/Windows as default
 
 # Folder name patterns
 ALREADY_NAMED_PATTERN = r'.+ \(\d{4}\)$'
@@ -55,11 +55,12 @@ class IGDBClient:
         if not self.access_token or time.time() >= self.token_expires:
             self.authenticate()
 
-    def search_game(self, game_name: str) -> Dict[str, Any]:
+    def search_game(self, game_name: str, platform_id: Optional[int] = None) -> Dict[str, Any]:
         """Search for a game and return list of matches or single result
 
         Args:
             game_name: The name of the game to search for
+            platform_id: IGDB platform ID to filter by (default: PC/Windows)
 
         Returns:
             Dictionary with status and game data:
@@ -68,6 +69,8 @@ class IGDBClient:
             - not_found: {"status": "not_found", "query": "..."}
             - error: {"status": "error", "message": "..."}
         """
+        if platform_id is None:
+            platform_id = IGDB_DEFAULT_PLATFORM_ID
         try:
             self.ensure_authenticated()
         except Exception as e:
@@ -85,7 +88,7 @@ class IGDBClient:
         games = []
         for query in search_variations:
             try:
-                games = self._query_igdb(headers, query)
+                games = self._query_igdb(headers, query, platform_id)
                 if games:
                     break  # Found some matches, stop trying variations
             except requests.RequestException:
@@ -101,12 +104,13 @@ class IGDBClient:
         else:
             return {"status": "multiple_matches", "games": formatted_games, "query": search_query}
 
-    def _query_igdb(self, headers: Dict[str, str], query: str) -> List[Dict[str, Any]]:
+    def _query_igdb(self, headers: Dict[str, str], query: str, platform_id: int) -> List[Dict[str, Any]]:
         """Query the IGDB API for a specific search term
 
         Args:
             headers: Request headers with authentication
             query: Search query string
+            platform_id: IGDB platform ID to filter by
 
         Returns:
             List of game results from IGDB
@@ -117,7 +121,7 @@ class IGDBClient:
         body = f'''
             search "{query}";
             fields name, first_release_date, version_parent;
-            where category = {IGDB_MAIN_GAME_CATEGORY} & platforms = ({IGDB_PC_PLATFORM_ID});
+            where category = {IGDB_MAIN_GAME_CATEGORY} & platforms = ({platform_id});
             limit {IGDB_SEARCH_LIMIT};
         '''
 
@@ -242,9 +246,10 @@ class IGDBClient:
 class GameFolderRenamer:
     """Handles renaming of game folders using IGDB data"""
 
-    def __init__(self, igdb_client: IGDBClient, base_path: str):
+    def __init__(self, igdb_client: IGDBClient, base_path: str, platform_id: Optional[int] = None):
         self.igdb_client = igdb_client
         self.base_path = base_path
+        self.platform_id = platform_id if platform_id is not None else IGDB_DEFAULT_PLATFORM_ID
         self.stats = {
             'total': 0,
             'renamed': 0,
