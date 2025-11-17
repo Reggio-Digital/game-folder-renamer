@@ -40,6 +40,18 @@ def _check_connection() -> bool:
 
 def _render_action_buttons() -> None:
     """Render the main action buttons (Scan, Process, Clear)"""
+    # Dry-run toggle
+    st.session_state.dry_run = st.checkbox(
+        "🔍 Dry Run Mode (Preview changes without actually renaming)",
+        value=st.session_state.get('dry_run', False),
+        help="When enabled, rename operations will only show what would happen without actually renaming folders"
+    )
+
+    if st.session_state.dry_run:
+        st.info("ℹ️ Dry Run Mode is enabled - no folders will be renamed")
+
+    st.divider()
+
     col1, col2, col3 = st.columns([2, 2, 2])
 
     with col1:
@@ -198,13 +210,20 @@ def _handle_rename_folder(folder_name: str, new_name: str, result: Dict[str, Any
         new_name: New folder name
         result: Result dictionary to update
     """
-    with st.spinner(f"Renaming {folder_name}..."):
-        rename_result = st.session_state.renamer.rename_folder(folder_name, new_name)
+    dry_run = st.session_state.get('dry_run', False)
+    action = "Simulating rename" if dry_run else "Renaming"
+
+    with st.spinner(f"{action} {folder_name}..."):
+        rename_result = st.session_state.renamer.rename_folder(folder_name, new_name, dry_run=dry_run)
 
         if rename_result['success']:
-            st.success(f"Renamed to: {new_name}")
-            result['status'] = 'renamed'
-            st.rerun()
+            if rename_result.get('dry_run'):
+                st.success(f"✅ DRY RUN: Would rename to: {new_name}")
+                st.info("ℹ️ No actual changes were made. Disable dry-run mode to perform the rename.")
+            else:
+                st.success(f"Renamed to: {new_name}")
+                result['status'] = 'renamed'
+                st.rerun()
         else:
             st.error(f"Error: {rename_result['error']}")
 
@@ -273,14 +292,20 @@ def _handle_apply_selection(
         if selected_idx < len(games):
             selected_game = games[selected_idx]
             new_name = format_game_name(selected_game)
+            dry_run = st.session_state.get('dry_run', False)
+            action = "Simulating rename" if dry_run else "Renaming"
 
-            with st.spinner(f"Renaming {folder_name}..."):
-                rename_result = st.session_state.renamer.rename_folder(folder_name, new_name)
+            with st.spinner(f"{action} {folder_name}..."):
+                rename_result = st.session_state.renamer.rename_folder(folder_name, new_name, dry_run=dry_run)
 
                 if rename_result['success']:
-                    st.success(f"Renamed to: {new_name}")
-                    result['status'] = 'renamed'
-                    st.rerun()
+                    if rename_result.get('dry_run'):
+                        st.success(f"✅ DRY RUN: Would rename to: {new_name}")
+                        st.info("ℹ️ No actual changes were made. Disable dry-run mode to perform the rename.")
+                    else:
+                        st.success(f"Renamed to: {new_name}")
+                        result['status'] = 'renamed'
+                        st.rerun()
                 else:
                     st.error(f"Error: {rename_result['error']}")
 
