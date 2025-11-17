@@ -79,5 +79,21 @@ with st.sidebar:
     if st.session_state.get('renamer'):
         st.caption(f"📁 **Folder:**\n{st.session_state.renamer.base_path}")
 
+    # GitHub link and credits at bottom
+    st.divider()
+    st.markdown(
+        """
+        <div style='text-align: center; padding: 10px 0;'>
+            <a href='https://github.com/Reggio-Digital/game-folder-renamer' target='_blank' style='text-decoration: none;'>
+                <span style='font-size: 1.2em;'>⭐</span> View on GitHub
+            </a>
+        </div>
+        <div style='text-align: center; padding: 5px 0; font-size: 0.9em;'>
+            Made by <a href='https://reggiodigital.com' target='_blank' style='text-decoration: none;'>Reggio Digital</a>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 # Run the selected page
 pg.run()
