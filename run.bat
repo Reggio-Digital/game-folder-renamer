@@ -19,11 +19,31 @@ REM Display Python version
 for /f "tokens=2" %%i in ('python --version 2^>^&1') do set PYTHON_VERSION=%%i
 echo Python %PYTHON_VERSION% found
 
-REM Check if Streamlit is installed
+REM Virtual environment directory
+set VENV_DIR=venv
+
+REM Check if virtual environment exists
+if not exist "%VENV_DIR%\Scripts\activate.bat" (
+    echo.
+    echo Creating virtual environment...
+    python -m venv "%VENV_DIR%"
+    if errorlevel 1 (
+        echo.
+        echo Error: Failed to create virtual environment
+        pause
+        exit /b 1
+    )
+    echo Virtual environment created
+)
+
+REM Activate virtual environment
+call "%VENV_DIR%\Scripts\activate.bat"
+
+REM Check if Streamlit is installed in the virtual environment
 python -c "import streamlit" >nul 2>&1
 if errorlevel 1 (
     echo.
-    echo Streamlit not found. Installing dependencies...
+    echo Installing dependencies in virtual environment...
     pip install -r requirements.txt
     if errorlevel 1 (
         echo.
